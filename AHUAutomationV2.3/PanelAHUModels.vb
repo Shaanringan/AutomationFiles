@@ -6055,6 +6055,8 @@ LeftSideHorC:
         End If
 
         Part.EditRebuild3()
+
+        MsgBox("hi")
 SaveAssem:
         ' Zoom To Fit
         Part.ViewZoomtofit2()
