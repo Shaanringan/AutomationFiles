@@ -49,8 +49,6 @@ Public Class PanelTypeAHU
 
     Public Sub MainSub(ClientName As String, AhuName As String, JobNo As String, Identifier As Char, WallHt As Decimal, WallWth As Decimal, fanArticleNo As String, FanNos As Integer, AHUDoor As Boolean)
 
-        MsgBox("GITHUB")
-
         maxPanelLth = StdFunc.GetFromTable("Max_PanLth", "article_no_table", "article_no", fanArticleNo)
         minPanelLth = StdFunc.GetFromTable("Min_PanLth", "article_no_table", "article_no", fanArticleNo)
 
