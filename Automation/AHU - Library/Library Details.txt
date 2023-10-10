@@ -1,0 +1,8 @@
+Motor Diameter                  Motor Blank Size                   Part Name
+
+310mm, 350mm, 400mm              650mm X 650mm                   _Motor Blank_01
+
+450mm, 500mm                     770mm X 770mm                   _Motor Blank_02
+
+560mm, 630mm                     870mm X 870mm                   _Motor Blank_03
+  
