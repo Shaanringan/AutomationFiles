@@ -426,6 +426,8 @@ Public Class SwAddin
                 Return True
             Case "38F3ABB7D203" ' Shantanu Laptop
                 Return True
+            Case "D4939016D195" ' Vedanti Laptop
+                Return True
             Case Else
                 Return False
         End Select
@@ -480,6 +482,8 @@ Public Class SwAddin
             Case "C01850A4CFBB" ' Gaurang Laptop
                 checkMACid = 4
             Case "2CEA7F056329" ' Aadesh Laptop
+                checkMACid = 4
+            Case "D4939016D195" ' Vedanti Laptop
                 checkMACid = 4
                 Return True
             Case Else

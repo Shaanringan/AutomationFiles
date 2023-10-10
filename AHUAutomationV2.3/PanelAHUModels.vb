@@ -512,7 +512,6 @@ saveblank:
         ElseIf BlankName = "_07_Side Blank_A" & i Then
             SideBlkXHoles(i) = HoleX
             SideBlkXDist(i) = HoleXDist
-
         ElseIf BlankName = "_09_Corner Blank_" & i Then
             SideBlkXHoles(i) = HoleX
             SideBlkXDist(i) = HoleXDist
@@ -1454,7 +1453,7 @@ SaveSideL2:
             myDimension.SystemValue = WallWth / 1000
             Part.ClearSelection2(True)
 
-            TopBotLHoles()                                                     '4.2mm Holes
+            TopBotLHoles(WallWth)                                                     '4.2mm Holes
 
 #Region "Slots"
             '--------------------------------------------Slots---------------------------------------------------------------
@@ -1515,7 +1514,7 @@ SaveSideL2:
                 myDimension.SystemValue = WallWth / 1000
                 Part.ClearSelection2(True)
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                TopBotLHoles(WallWth)                                                     '4.2mm Holes
 
                 swApp.ActivateDoc2("_02A_Top_L - PushSide.SLDPRT", False, longstatus)
                 Part = swApp.ActiveDoc
@@ -1576,7 +1575,7 @@ AHUDoor:
                 myDimension.SystemValue = WallWth / 1000
                 Part.ClearSelection2(True)
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                TopBotLHoles(WallWth)                                                     '4.2mm Holes
 
                 swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
                 Part = swApp.ActiveDoc
@@ -1638,7 +1637,7 @@ AHUDoor:
                 myDimension.SystemValue = WallWth / 1000
                 Part.ClearSelection2(True)
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                TopBotLHoles(WallWth)                                                     '4.2mm Holes
 
                 swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
                 Part = swApp.ActiveDoc
@@ -1659,7 +1658,6 @@ AHUDoor:
                     Next
                     skPoint = Part.SketchManager.CreatePoint(((-WallWth / 2000) + (0.025 + SBWth)), 0, 0)
                 End If
-
 
                 'Fan Holes
                 For b = 1 To FanNoX
@@ -1848,10 +1846,10 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                '--------------------------------------------------------- Bot L2 ---------------------------------------------------
-                swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
+                    '--------------------------------------------------------- Bot L2 ---------------------------------------------------
+                    swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
                 Part = swApp.ActiveDoc
 
                 boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
@@ -1894,9 +1892,9 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
+                    swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
                 Part = swApp.ActiveDoc
 
                 boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
@@ -1932,9 +1930,9 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
                 'Fan Holes
@@ -1986,10 +1984,9 @@ clrslc:
                 BTLth = (WallWth / 1000) - (DoorBlkWth + (PanelWth * (FanNoX / 2000)))
                 Part.ClearSelection2(True)
 
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                TopBotLHoles()                                                     '4.2mm Holes
-
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
 
@@ -2047,9 +2044,9 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
                 'Fan Holes
@@ -2089,9 +2086,9 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
                 'Fan Holes
@@ -2131,9 +2128,9 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
                 'Fan Holes
@@ -2181,9 +2178,9 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
 
@@ -2225,10 +2222,10 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                '------- Bot L2 ----------
-                swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
+                    '------- Bot L2 ----------
+                    swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
                 Part = swApp.ActiveDoc
 
                 boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
@@ -2290,9 +2287,9 @@ clrslc:
                 Part.ClearSelection2(True)
 
 
-                TopBotLHoles()                                                     '4.2mm Holes
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
                 'Fan Holes
@@ -2353,10 +2350,9 @@ clrslc:
                 BTLth = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
                 Part.ClearSelection2(True)
 
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                TopBotLHoles()                                                     '4.2mm Holes
-
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
                 'Fan Holes
@@ -2414,10 +2410,9 @@ clrslc:
                 BTLth = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
                 Part.ClearSelection2(True)
 
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                TopBotLHoles()                                                     '4.2mm Holes
-
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
 
@@ -2473,11 +2468,10 @@ clrslc:
                 BTLth = SideClear / 1000 + ((PanelWth / 1000) * Truncate(FanNoX / 2))
                 Part.ClearSelection2(True)
 
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                TopBotLHoles()                                                     '4.2mm Holes
-
-                '------- Bot L2 ----------
-                swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
+                    '------- Bot L2 ----------
+                    swApp.ActivateDoc2("_02A_Top & Bot_L.SLDPRT", False, longstatus)
                 Part = swApp.ActiveDoc
 
                 boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
@@ -2538,10 +2532,9 @@ clrslc:
                 BTLth = SideClear / 1000 + ((PanelWth / 1000) * Truncate(FanNoX / 2))
                 Part.ClearSelection2(True)
 
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                TopBotLHoles()                                                     '4.2mm Holes
-
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
                 'Fan Holes
@@ -2601,10 +2594,9 @@ clrslc:
                 BTLth = (WallWth / 1000) - (SideClear / 1000 + ((PanelWth / 1000) * Truncate(FanNoX / 2)))
                 Part.ClearSelection2(True)
 
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                TopBotLHoles()                                                     '4.2mm Holes
-
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
                 'Fan Holes
@@ -2664,24 +2656,22 @@ clrslc:
                 BTLth = (WallWth / 1000) - (SideClear / 1000 + ((PanelWth / 1000) * Truncate(FanNoX / 2)))
                 Part.ClearSelection2(True)
 
+                    TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
-                TopBotLHoles()                                                     '4.2mm Holes
-
-                boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Slots", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSketch()
 
 
-                'Fan Holes
-                For b = 1 To Ceiling(FanNoX / 2)
-                    For a = 1 To MotorShtXHole - 1
-                        skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - 0.025 - (MotorShtXHoleDist * a) - (PanelWth / 1000 * (b - 1))), 0, 0)
+                    'Fan Holes
+                    For b = 1 To Ceiling(FanNoX / 2)
+                        For a = 1 To MotorShtXHole - 1
+                            skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - 0.025 - (MotorShtXHoleDist * a) - (PanelWth / 1000 * (b - 1))), 0, 0)
+                        Next
+                        skPoint = Part.SketchManager.CreatePoint((BTLth / 2) - 0.025 - (b * (MotorShtXHoleDist * (MotorShtXHole - 1))) - (0.05 * b), 0, 0)
                     Next
-                    skPoint = Part.SketchManager.CreatePoint((BTLth / 2) - 0.025 - (b * (MotorShtXHoleDist * (MotorShtXHole - 1))) - (0.05 * b), 0, 0)
 
-                Next
-
-                'Blank Holes
-                If BlkNosX = 1 Then
+                    'Blank Holes
+                    If BlkNosX = 1 Then
                     For a = 1 To SideBlkXHoles(1) - 2
                         skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - 0.025 - (((PanelWth / 1000 * Ceiling(FanNoX / 2)))) - (SideBlkXDist(1) * a)), 0, 0)
                     Next
@@ -2758,33 +2748,24 @@ clrslc:
             swApp.CloseAllDocuments(True)
 
             TopBotLDrawings()
-            TopBot2BLDrawings()
+            TopBot2BLDrawings((WallWth / 1000) - BTLth)
             swApp.CloseAllDocuments(True)
         End If
 #End Region
 
     End Sub
 
-    Public Sub TopBotLHoles()
+    Public Sub TopBotLHoles(WWth As Decimal)
 
         '4.2mm holes--------------------------------------------------------
-        If WallWth <= MaxSecLth3mm Then
-            Dim HoleX As Integer = SideHoleNumberTopBotL(WallWth, 40)
-            Dim HoleXDist As Decimal = SideHoleDistTopBotL(HoleX, WallWth, 40)
+        Dim HoleX As Integer = SideHoleNumberTopBotL(WWth, 40)
+        Dim HoleXDist As Decimal = SideHoleDistTopBotL(HoleX, WWth, 40)
 
             boolstatus = Part.Extension.SelectByID2("Right Plane", "PLANE", 0, 0, 0, False, 1, Nothing, 0)
             boolstatus = Part.Extension.SelectByID2("4.2mm Hole", "BODYFEATURE", 0, 0, 0, True, 4, Nothing, 0)
             myFeature = Part.FeatureManager.FeatureLinearPattern2(HoleX + 1, HoleXDist, 0, 0, True, True, "NULL", "NULL", False)
             Part.ClearSelection2(True)
-        Else
-            Dim HoleX As Integer = SideHoleNumberTopBotL(WallWth / 2, 40)
-            Dim HoleXDist As Decimal = SideHoleDistTopBotL(HoleX, WallWth / 2, 40)
 
-            boolstatus = Part.Extension.SelectByID2("Right Plane", "PLANE", 0, 0, 0, False, 1, Nothing, 0)
-            boolstatus = Part.Extension.SelectByID2("4.2mm Hole", "BODYFEATURE", 0, 0, 0, True, 4, Nothing, 0)
-            myFeature = Part.FeatureManager.FeatureLinearPattern2(HoleX + 1, HoleXDist, 0, 0, True, True, "NULL", "NULL", False)
-            Part.ClearSelection2(True)
-        End If
 
     End Sub
 
@@ -3241,7 +3222,7 @@ SaveVerC:
                 'Re-Dim
                 boolstatus = Part.Extension.SelectByID2("Dist@HorCHoles@_06_Hor_C_Support.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
                 myDimension = Part.Parameter("Dist@HorCHoles")
-                myDimension.SystemValue = SideBlkXDist(BlkNosX)
+                myDimension.SystemValue = SideBlkXDist(BlkNosX * BlkNosY)
                 Part.ClearSelection2(True)
 
                 boolstatus = Part.Extension.SelectByID2("SlotPattern", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
@@ -5805,8 +5786,8 @@ SideLAssem:
                 myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                 Part.ClearSelection2(True)
             Else
-                boolstatus = Part.Extension.SelectByID2(AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                Part.EditDelete()
+                'boolstatus = Part.Extension.SelectByID2(AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                'Part.EditDelete()
             End If
 
             Part.ClearSelection2(True)
@@ -5838,7 +5819,7 @@ SideLAssem:
                     If BlkOne = 400 Then
                         myFeature = Part.FeatureManager.FeatureLinearPattern2(2, 0.4, 0, 0, True, True, "NULL", "NULL", False)
                     Else
-                        myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                        myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
                     End If
                     Part.ClearSelection2(True)
                     Part.ViewZoomtofit2()
@@ -7383,7 +7364,7 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub SideLDrawings()
-        'Exit Sub
+        ' Exit Sub
 
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_03A_Side_L_Left.SLDPRT", 1, 32, "", longstatus, longwarnings)
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_03A_Side_L_Right.SLDPRT", 1, 32, "", longstatus, longwarnings)
@@ -7690,7 +7671,7 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub TopBotLDrawings()
-        'Exit Sub
+        ' Exit Sub
 
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02A_Bot_L.SLDPRT", 1, 0, "", longstatus, longwarnings)
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02A_Top_L.SLDPRT", 1, 0, "", longstatus, longwarnings)
@@ -8087,7 +8068,7 @@ TWO_SIDE_Ls:
         swApp.CloseAllDocuments(True)
     End Sub
 
-    Public Sub TopBot2BLDrawings()
+    Public Sub TopBot2BLDrawings(BTLth As Decimal)
         'Exit Sub
 
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02B_Bot_L2.SLDPRT", 1, 0, "", longstatus, longwarnings)
@@ -8251,21 +8232,21 @@ TWO_SIDE_Ls:
         'Height - A View 
         boolstatus = Part.ActivateView("Drawing View3")
         boolstatus = Part.Extension.SelectByRay(xFrontFlat, (xIso + 0.01) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat - ((WallWth - 2) / (SScale * 2000)), (xIso + 0.01) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat - ((BTLth - 0.002) / (SScale * 2)), (xIso + 0.01) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
         myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, (xIso + 0.01), 0)
         Part.ClearSelection2(True)
 
-        'Height - A View 
-        boolstatus = Part.ActivateView("Drawing View3")
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat, (xIso + 0.01) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat + ((WallWth - 2) / (SScale * 2000)), (xIso + 0.01) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xFrontFlat + 0.06, (xIso + 0.01) - 0.01, 0)
-        Part.ClearSelection2(True)
+        ''Height - A View 
+        'boolstatus = Part.ActivateView("Drawing View3")
+        'boolstatus = Part.Extension.SelectByRay(xFrontFlat, (xIso + 0.01) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        'boolstatus = Part.Extension.SelectByRay(xFrontFlat + ((BTLth - 0.002) / (SScale * 2)), (xIso + 0.01) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        'myDisplayDim = Part.AddDimension2(xFrontFlat + 0.06, (xIso + 0.01) - 0.01, 0)
+        'Part.ClearSelection2(True)
 
         'Width - A View 
         boolstatus = Part.ActivateView("Drawing View3")
-        boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((WallWth) / (SScale * 2000))), (xIso + 0.01) + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay((xFrontFlat - ((WallWth) / (SScale * 2000))), (xIso + 0.01) + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((BTLth) / (SScale * 2))), (xIso + 0.01) - (0.024 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat - ((BTLth) / (SScale * 2))), (xIso + 0.01), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
         myDisplayDim = Part.AddHorizontalDimension2(xFrontFlat, (xIso + 0.01) + 0.011, 0)
         Part.ClearSelection2(True)
 
@@ -8421,31 +8402,31 @@ TWO_SIDE_Ls:
         Part.ClearSelection2(True)
 
 
-        'Height - A View   
-        boolstatus = Part.ActivateView("Drawing View8")
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat, (yTopSec - 0.05) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat - ((WallWth - 2) / (SScale * 2000)), (yTopSec - 0.05) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, (yTopSec - 0.05), 0)
-        Part.ClearSelection2(True)
+        ''Height - A View   
+        'boolstatus = Part.ActivateView("Drawing View8")
+        'boolstatus = Part.Extension.SelectByRay(xFrontFlat, (yTopSec - 0.05) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        'boolstatus = Part.Extension.SelectByRay(xFrontFlat - ((BTLth - 0.002) / (SScale * 2000)), (yTopSec - 0.05) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        'myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, (yTopSec - 0.05), 0)
+        'Part.ClearSelection2(True)
 
         'Height - A View   
         boolstatus = Part.ActivateView("Drawing View8")
         boolstatus = Part.Extension.SelectByRay(xFrontFlat, (yTopSec - 0.05) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat + ((WallWth - 2) / (SScale * 2000)), (yTopSec - 0.05) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xFrontFlat + 0.06, (yTopSec - 0.05) - 0.01, 0)
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat + ((BTLth - 0.002) / (SScale * 2)), (yTopSec - 0.05) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2(xFrontFlat + 0.06, (yTopSec - 0.05) + 0.01, 0)
         Part.ClearSelection2(True)
 
         'Width - A View
         boolstatus = Part.ActivateView("Drawing View8")
-        boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((WallWth) / (SScale * 2000))), (yTopSec - 0.05) + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay((xFrontFlat - ((WallWth) / (SScale * 2000))), (yTopSec - 0.05) + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((BTLth) / (SScale * 2))), (yTopSec - 0.05) + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat - ((BTLth) / (SScale * 2))), (yTopSec - 0.05) - (0.024 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
         myDisplayDim = Part.AddDimension2(xFrontFlat, (yTopSec - 0.05) + 0.011, 0)
         Part.ClearSelection2(True)
 
         'Width - B View  
         boolstatus = Part.ActivateView("Drawing View9")
-        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) + (0.025 / SScale), (yTopSec), -5500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.025 / SScale), (yTopSec) - (0.024 / SScale), -5500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) + (0.025 / SScale), (yTopSec), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.025 / SScale), (yTopSec) - (0.024 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
         myDisplayDim = Part.AddDimension2((xIso + 0.03) - 0.01, (yTopSec) - 0.012, 0)
         Part.ClearSelection2(True)
 
@@ -8453,7 +8434,7 @@ TWO_SIDE_Ls:
         boolstatus = Part.ActivateView("Drawing View9")
         boolstatus = Part.Extension.SelectByRay((xIso + 0.03) + (0.024 / SScale), (yTopSec) + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
         boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.014 / SScale), (yTopSec) - (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2((xIso + 0.03) + 0.015, (yTopSec) + 0.01, 0)
+        myDisplayDim = Part.AddDimension2((xIso + 0.03) + 0.012, (yTopSec) + 0.01, 0)
         Part.ClearSelection2(True)
 
         'Note
