@@ -154,6 +154,10 @@ Public Class PanelAHUModels
             swApp.ActivateDoc2("_01A_Motor Blank_01.SLDPRT", False, longstatus)
             Part = swApp.ActiveDoc
 
+            If PnlHt <> 0.725 Or PnlWth <> 0.725 Then
+                MsgBox("Motor Panel is Non Standard make changes in the Nesting accordingly." & vbNewLine & " Job Number : " & AHUName)
+            End If
+
             'Re-Dim
             boolstatus = Part.Extension.SelectByID2("Width@BaseFlange@_01A_Motor Blank_01.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
             myDimension = Part.Parameter("Width@BaseFlange")
@@ -6056,7 +6060,6 @@ LeftSideHorC:
 
         Part.EditRebuild3()
 
-        MsgBox("hi")
 SaveAssem:
         ' Zoom To Fit
         Part.ViewZoomtofit2()
@@ -7152,7 +7155,7 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub VerCDrawings(XFans As Integer)
-        'Exit Sub
+        ' Exit Sub
         swApp.ActivateDoc2(AHUName & "_04A_Vertical Channel", False, longstatus)
         Part = swApp.ActiveDoc
 
@@ -7366,7 +7369,7 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub SideLDrawings()
-        ' Exit Sub
+        'Exit Sub
 
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_03A_Side_L_Left.SLDPRT", 1, 32, "", longstatus, longwarnings)
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_03A_Side_L_Right.SLDPRT", 1, 32, "", longstatus, longwarnings)
@@ -8455,7 +8458,7 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub BaseStandDrawings(PartName As String, BaseQty As Integer, BaseSize As Decimal)
-        ' Exit Sub
+        'Exit Sub
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_10_Base_Stand.SLDPRT", 2, 32, "", longstatus, longwarnings)
 
         swApp.ActivateDoc2(AHUName & "_10_Base_Stand", False, longstatus)
@@ -8632,7 +8635,7 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub AssemDrawing()
-        ' Exit Sub
+        'Exit Sub
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_AHU Final Assembly.SLDASM", 2, 32, "", longstatus, longwarnings)
         Assy = Part
         Assy.ViewZoomtofit2()
