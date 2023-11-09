@@ -178,7 +178,7 @@ Public Class Standard_Functions
         swPackAndGo.FlattenToSingleFolder = True
 
         ' Add a prefix and suffix to the new Pack and Go filenames
-        swPackAndGo.AddPrefix = PreFix & "_"
+        swPackAndGo.AddPrefix = PreFix '& "_"
         'swPackAndGo.AddSuffix = "_PackAndGo"
 
         ' Verify document paths and filenames after adding prefix and suffix
@@ -457,9 +457,9 @@ Public Class Standard_Functions
             IO.Directory.CreateDirectory("C:\AHU Automation - Output\" & ClientName & "\" & AHUName & "\" & JobNo & "\Drawings\Support Structure")
         End If
 
-        If Not IO.Directory.Exists("C:\AHU Automation - Output\" & ClientName & "\" & AHUName & "\" & JobNo & "\Motor") Then
-            IO.Directory.CreateDirectory("C:\AHU Automation - Output\" & ClientName & "\" & AHUName & "\" & JobNo & "\Motor")
-        End If
+        'If Not IO.Directory.Exists("C:\AHU Automation - Output\" & ClientName & "\" & AHUName & "\" & JobNo & "\Motor") Then
+        '    IO.Directory.CreateDirectory("C:\AHU Automation - Output\" & ClientName & "\" & AHUName & "\" & JobNo & "\Motor")
+        'End If
 
         If Not IO.Directory.Exists("C:\AHU Automation - Output\" & ClientName & "\" & AHUName & "\" & JobNo & "\Motor Box") Then
             IO.Directory.CreateDirectory("C:\AHU Automation - Output\" & ClientName & "\" & AHUName & "\" & JobNo & "\Motor Box")

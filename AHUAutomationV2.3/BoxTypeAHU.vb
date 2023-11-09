@@ -13,9 +13,9 @@ Public Class BoxTypeAHU
     Dim predictivedb As New PredictiveDBInput
     Dim bomData As New BOMExcel
 
-    Dim maxBoxLth, minBoxLth As Integer
+    Dim maxBoxLth, minBoxLth As Decimal
     Dim FanNoX, FanNoY As Integer
-    Dim boxHt, boxWth, boxDth As Integer
+    Dim boxHt, boxWth, boxDth As Decimal
     Dim SideClear, TopClear As Decimal
     Dim lastpart As Integer
     Dim TempSideClr As Decimal
@@ -119,7 +119,7 @@ FanCheck:
 #End Region
 
 #Region "Frame Dimensions-------------------------------------------------"
-        Dim MaxSecLth As Integer = 1100
+        Dim MaxSecLth As Integer = 1101
         Dim MinBlankWth As Integer = 200
         Dim InnerWallHt As Integer = WallHt - 200
         If TopClear < MinBlankWth Then
@@ -143,8 +143,8 @@ FanCheck:
         End If
 
         'Vertical Sections - ALL
-        Dim VerMaxSecLth As Integer = MaxSecLth
-        Dim VerSecLth_Last As Integer = InnerWallHt - (VerMaxSecLth * (VerSecNo - 1))
+        Dim VerMaxSecLth As Decimal = MaxSecLth
+        Dim VerSecLth_Last As Decimal = InnerWallHt - (VerMaxSecLth * (VerSecNo - 1))
         While VerSecLth_Last < 300
             VerMaxSecLth -= 10
             VerSecLth_Last = InnerWallHt - (VerMaxSecLth * (VerSecNo - 1))
@@ -159,22 +159,55 @@ FanCheck:
             InnerWallHt -= VerMaxSecLth
         Next
 
-        'Horizontal Sections - TOP & BOT
+        ''Horizontal Sections - TOP & BOT
+        'Dim HorMaxSecLth As Integer = MaxSecLth
+        'Dim HorSecLth_Last As Integer = WallWth - (HorMaxSecLth * (HorSecNo - 1))
+        'While HorSecLth_Last < 300
+        '    HorMaxSecLth -= 10
+        '    HorSecLth_Last = WallWth - (HorMaxSecLth * (HorSecNo - 1))
+        'End While
+
+        'For i = 0 To UBound(HorSecLth)
+        '    If InnerWallWth < HorMaxSecLth Then
+        '        HorSecLth(i) = InnerWallWth
+        '    Else
+        '        HorSecLth(i) = HorMaxSecLth
+        '    End If
+        '    InnerWallWth -= HorMaxSecLth
+        'Next
+
+
+
         Dim HorMaxSecLth As Integer = MaxSecLth
-        Dim HorSecLth_Last As Integer = WallWth - (HorMaxSecLth * (HorSecNo - 1))
-        While HorSecLth_Last < 300
-            HorMaxSecLth -= 10
-            HorSecLth_Last = WallWth - (HorMaxSecLth * (HorSecNo - 1))
+        'Dim HorSecLth_Last As Integer = WallWth - (HorMaxSecLth * (HorSecNo - 1))
+        Dim HorSecLth_Last As Integer = WallWth
+        'Dim fullsizepart As Integer = 0
+
+        While HorSecLth_Last > HorMaxSecLth
+            HorSecLth_Last = HorSecLth_Last - HorMaxSecLth
+            'fullsizepart += 1
         End While
 
+        If HorSecLth_Last < HorMaxSecLth Then
+            HorSecLth_Last /= 2
+            If HorSecLth_Last < 300 Then
+                HorSecLth_Last = ((HorSecLth_Last * 2) + HorMaxSecLth) / 2
+            End If
+        End If
+
+
         For i = 0 To UBound(HorSecLth)
-            If InnerWallWth < HorMaxSecLth Then
-                HorSecLth(i) = InnerWallWth
+            If i = 0 Or i = UBound(HorSecLth) Then
+                HorSecLth(i) = HorSecLth_Last
             Else
                 HorSecLth(i) = HorMaxSecLth
             End If
-            InnerWallWth -= HorMaxSecLth
         Next
+
+
+
+
+
 
 #End Region
 
@@ -212,24 +245,29 @@ FanCheck:
         BoxAHUModel.AHUName = AhuName
         BoxAHUModel.JobNo = JobNo
         BoxAHUModel.ArticleNoFan = fanArticleNo
+        BoxAHUModel.SaveFolder = "C:\AHU Automation - Output\" & ClientName & "\" & AhuName & "\" & JobNo
 
 #Region "Box----------------------"
+        BoxAHUModel.MotorBoxAssy(fanArticleNo)
+
         BoxAHUModel.BackSheet(boxWth / 1000, boxHt / 1000, boxDth / 1000, FanDia, HoleCD / 1000)
-        BoxAHUModel.LHSBeam(boxHt / 1000, boxDth / 1000)
+        BoxAHUModel.LhsL(boxHt / 1000, boxDth / 1000)
         BoxAHUModel.LHSSheet(boxHt / 1000, boxDth / 1000, HoleCD / 1000)
-        BoxAHUModel.BottomSupport(boxDth / 1000)
-        BoxAHUModel.RHSBeam(boxHt / 1000, boxDth / 1000)
-        BoxAHUModel.FrontTopBeam(boxWth / 1000, boxHt / 1000, boxDth / 1000, HoleCD / 1000)
-        BoxAHUModel.FanVerticalStand(HoleCD / 1000, FanRingCD / 1000)
-        BoxAHUModel.FanHorizontalStand()
 
-        BoxAHUModel.BackSheetDrawing()
-        BoxAHUModel.LHSDrawing()
-        BoxAHUModel.BotSupp_RHSBeam_FrontTopBeam_Drawing()
+        BoxAHUModel.RhsL(boxHt / 1000, boxDth / 1000)
+        BoxAHUModel.FrontTopBeam(boxWth / 1000, boxHt / 1000, boxDth / 1000, HoleCD / 1000, fanArticleNo)
 
-        BoxAHUModel.BoxAssembly(boxWth / 1000, boxHt / 1000, boxDth / 1000, HoleCD / 1000)
 
-        BoxAHUModel.BoxAssyDrawing()
+        'BoxAHUModel.BackSheetDrawing()
+        'BoxAHUModel.LHSDrawing()
+        'BoxAHUModel.BotSupp_RHSBeam_FrontTopBeam_Drawing()
+
+
+
+
+
+        BoxAHUModel.BoxAssembly(boxWth / 1000, boxHt / 1000, boxDth / 1000, HoleCD / 1000, fanArticleNo)
+        'BoxAHUModel.BoxAssyDrawing(fanArticleNo)
 
 #End Region
 
@@ -252,7 +290,7 @@ FanCheck:
         'Vertical Sections -MID
         For i = 0 To UBound(VerSecLth)
             lastpart = UBound(VerSecLth) + 1
-            BoxAHUModel.FrameMidVerSec(VerSecLth(i) / 1000, VerSecLth, WallHt, boxHt, i + 1, lastpart)
+            BoxAHUModel.FrameMidVerSec(VerSecLth(i) / 1000, VerSecLth, WallHt, boxHt, i + 1, lastpart, FanNoY)
         Next
 
         'Horizontal Sections -MID

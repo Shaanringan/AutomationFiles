@@ -46,6 +46,9 @@ Public Class PanelAHUModels
     ReadOnly DrawSheet As String = "C:\Program Files (x86)\Crescent Engineering\Automation\AHU - Library\Drawing\AADTech Sheet Format - A4 - Landscape.slddrt"
     ReadOnly BOMTemp As String = "C:\Program Files (x86)\Crescent Engineering\Automation\AHU - Library\Drawing\BOM Template.sldbomtbt"
 
+    Dim fileText As String
+    Dim filePath As String
+
     Dim StdFunc As New Standard_Functions
     Dim predictivedb As New PredictiveDBInput
     Dim bomData As New BOMExcel
@@ -96,6 +99,7 @@ Public Class PanelAHUModels
     Dim HoleSpc As Decimal
     Dim HoleYBlk(3) As Integer
     Dim HoleYBlkDist(3) As Decimal
+    Dim VerCQty As Integer
 
     Dim PartNameList As New List(Of String)
     Dim PartList As New List(Of String)
@@ -140,13 +144,14 @@ Public Class PanelAHUModels
         Part = swApp.ActiveDoc
         Assy.ViewZoomtofit2()
         boolstatus = Assy.EditRebuild3()
+        'StdFunc.PackAndGo(SaveFolder & "\AHU\", "TestShantanu")
         longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_" & ArtNo & ".SLDASM", 0, 0)
 
         swApp.CloseAllDocuments(True)
 
     End Sub
 
-    Public Sub MotorSheet(PnlWth As Decimal, PnlHt As Decimal, FanDia As String, FanNoX As Integer, FanNoY As Integer, FanNos As Integer)
+    Public Sub MotorSheet(PnlWth As Decimal, PnlHt As Decimal, FanDia As String, FanNoX As Integer, FanNoY As Integer, FanNos As Integer, MotorDia As Integer, ClientName As String)
 
         If FanDia = "560" Or FanDia = "500" Or FanDia = "450" Or FanDia = "400" Then
             'Open Part
@@ -155,7 +160,11 @@ Public Class PanelAHUModels
             Part = swApp.ActiveDoc
 
             If PnlHt <> 0.725 Or PnlWth <> 0.725 Then
-                MsgBox("Motor Panel is Non Standard make changes in the Nesting accordingly." & vbNewLine & " Job Number : " & AHUName)
+                filePath = "C:\AHU Automation - Output\" & ClientName & "\" & "Non Standard Jobs list.txt"
+                fileText = vbNewLine & "Motor Panel is Non Standard make changes in the Nesting accordingly." & vbNewLine & " Job Number : " & AHUName
+
+                ' Write the text to the file
+                File.AppendAllText(filePath, fileText)
             End If
 
             'Re-Dim
@@ -194,7 +203,7 @@ Public Class PanelAHUModels
         End If
 
         ' 9.2mm Holes --------------------------------------------------------------
-        If FanDia = "560" Or FanDia = "500" Or FanDia = "450" Then
+        If FanDia = "560" Or FanDia = "500" Or FanDia = "450" Or FanDia = "400" Or FanDia = "350" Or FanDia = "310" Then
             MotorShtXHole = InterBoltingNumber(PnlWth * 1000, 25)
             MotorShtXHoleDist = BoltDistance(MotorShtXHole, PnlWth * 1000, 25)
             MotorShtYHole = InterBoltingNumber(PnlHt * 1000, 25)
@@ -244,7 +253,7 @@ Public Class PanelAHUModels
         Part.ClearSelection2(True)
         boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
         longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_01A_Motor Blank_01.SLDPRT", 0, 0)
-        MotorPlateDrawings(AHUName & "_01A_Motor Blank_01", FanNos, FanDia, PnlWth, PnlHt)
+        MotorPlateDrawings(AHUName & "_01A_Motor Blank_01", FanNos, FanDia, PnlWth, PnlHt, MotorDia)
         swApp.CloseAllDocuments(True)
 
 
@@ -419,7 +428,7 @@ Public Class PanelAHUModels
 
         boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
 
-        ' 9.2mm Holes --------------------------------------------------------------
+        ' 8.5mm Holes --------------------------------------------------------------
         If TopXHoles = True Then
             HoleX = SmolInterBoltingNumber(BlkWth * 1000, 25)
             HoleXDist = SmolBoltDistance(HoleX, BlkWth * 1000, 25)
@@ -916,7 +925,7 @@ SaveDoorBlank:
 
 #Region "Side L"
 
-    Public Sub Side_L(LWidth As Decimal, FansY As Integer, PnlHgt As Decimal, BlkNoY As Integer, TopClear As Decimal, CrnBlkHt As Decimal, BlkHt() As Decimal)
+    Public Sub Side_L(LWidth As Decimal, FansY As Integer, PnlHgt As Decimal, BlkNoY As Integer, TopClear As Decimal, CrnBlkHt As Decimal, BlkHt() As Decimal, SideClear As Decimal)
 
         For a = 0 To BlkNoY - 1
             HoleYBlk(a) = SlotsInterBoltingNumber(BlkHt(a), 25)
@@ -940,6 +949,8 @@ SaveDoorBlank:
             Part.ViewZoomtofit2()
             SideLHoles(HoleSpc)                  '----------4.2mm holes
 
+
+            '--------------------------------------------LEFT-----------------------------------------------------------
 #Region "Slots"
             Dim Minus25 As Decimal = 0.025
             ' --------------------------------------------Slots---------------------------------------------------------------
@@ -1015,7 +1026,12 @@ SaveDoorBlank:
                             skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
                             skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) + 0.05 - Minus25, 0)
                         Else
-                            skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                            If MotorShtYHole = 3 Then
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25 + 0.05, 0)
+                            Else
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                            End If
                         End If
                     Next
                 End If
@@ -1052,7 +1068,12 @@ SaveDoorBlank:
                             skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
                             skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) + 0.05 - Minus25, 0)
                         Else
-                            skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                            If MotorShtYHole = 3 Then
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25 + 0.05, 0)
+                            Else
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                            End If
                         End If
                     Next
                 End If
@@ -1190,7 +1211,12 @@ SaveSideL:
                             skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
                             skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) + 0.05 - Minus25, 0)
                         Else
-                            skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                            If MotorShtYHole = 3 Then
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25 + 0.05, 0)
+                            Else
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                            End If
                         End If
                     Next
                 End If
@@ -1227,7 +1253,12 @@ SaveSideL:
                             skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
                             skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) + 0.05 - Minus25, 0)
                         Else
-                            skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                            If MotorShtYHole = 3 Then
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25 + 0.05, 0)
+                            Else
+                                skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
+                            End If
                         End If
                     Next
                 End If
@@ -1597,7 +1628,11 @@ AHUDoor:
                     End If
 
                     For a = 1 To SideBlkXHoles(d)
-                        skPoint = Part.SketchManager.CreatePoint(((WallWth / 2000) - (0.025 + (SideBlkXDist(d) * a))), 0, 0)
+                        If HoleX = 2 Then
+                            skPoint = Part.SketchManager.CreatePoint(((WallWth / 2000) - (0.025 + ((SideBlkXDist(d) * a) / 2))), 0, 0)
+                        Else
+                            skPoint = Part.SketchManager.CreatePoint(((WallWth / 2000) - (0.025 + (SideBlkXDist(d) * a))), 0, 0)
+                        End If
                     Next
                     skPoint = Part.SketchManager.CreatePoint(((WallWth / 2000) - (0.025 + SBWth)), 0, 0)
                 End If
@@ -1657,8 +1692,13 @@ AHUDoor:
                     Else
                         d = 2
                     End If
+
                     For a = 1 To SideBlkXHoles(d)
-                        skPoint = Part.SketchManager.CreatePoint(((-WallWth / 2000) + (0.025 + (SideBlkXDist(d) * a))), 0, 0)
+                        If HoleX = 2 Then
+                            skPoint = Part.SketchManager.CreatePoint(((-WallWth / 2000) + (0.025 + ((SideBlkXDist(d) * a) / 2))), 0, 0)
+                        Else
+                            skPoint = Part.SketchManager.CreatePoint(((-WallWth / 2000) + (0.025 + (SideBlkXDist(d) * a))), 0, 0)
+                        End If
                     Next
                     skPoint = Part.SketchManager.CreatePoint(((-WallWth / 2000) + (0.025 + SBWth)), 0, 0)
                 End If
@@ -1774,6 +1814,8 @@ AHUDoor:
                 If BlkNosX > 0 Then
 
                     If SideBlkXHoles(1) = 0 Or SideBlkXHoles(1) = 1 Then
+                        skPoint = Part.SketchManager.CreatePoint(-0.025 + (-MotorShtXHoleDist * (MotorShtXHole - 1)) - 0.05, 0, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025 + (MotorShtXHoleDist * (MotorShtXHole - 1)) + 0.05, 0, 0)
                         GoTo clrslc
                     End If
 
@@ -2221,9 +2263,9 @@ clrslc:
 
                 boolstatus = Part.Extension.SelectByID2("Width@BaseFlange@_02A_Top & Bot_L.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
                 myDimension = Part.Parameter("Width@BaseFlange")
-                myDimension.SystemValue = SideClear / 1000 + (PanelWth * (FanNoX / 2000))
-                BTLth = SideClear / 1000 + (PanelWth * (FanNoX / 2000))
-                Part.ClearSelection2(True)
+                    myDimension.SystemValue = SideClear / 1000 + (PanelWth * (FanNoX / 2000))
+                    BTLth = SideClear / 1000 + (PanelWth * (FanNoX / 2000))
+                    Part.ClearSelection2(True)
 
 
                     TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
@@ -2243,34 +2285,27 @@ clrslc:
                     skPoint = Part.SketchManager.CreatePoint((BTLth / 2) - 0.025 - (b * (MotorShtXHoleDist * (MotorShtXHole - 1))) - (0.05 * b), 0, 0)
                 Next
 
-                'Blank Holes
-                If BlkNosX = 1 Then
-                    For a = 1 To SideBlkXHoles(1) - 2
-                        skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a) - 0.025), 0, 0)
-                    Next
-                Else
+                    'Blank Holes
+                    If BlkNosX = 1 Then
+                        For a = 1 To SideBlkXHoles(1) - 2
+                            skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a) - 0.025), 0, 0)
+                        Next
+                    Else
 
-                    For a = 1 To SideBlkXHoles(1) - 2
-                        skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a) - 0.025), 0, 0)
-                    Next
+                        For a = 1 To SideBlkXHoles(1) - 1
+                            skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a) - 0.025), 0, 0)
+                        Next
+                        skPoint = Part.SketchManager.CreatePoint((BTLth / 2) - 0.025 - 0.05 - (PanelWth / 1000 * (FanNoX / 2)) - (SideBlkXDist(1) * (SideBlkXHoles(1) - 1)), 0, 0)
 
-                    For a = 1 To SideBlkXHoles(2) - 1
-                        skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(2) * a) - 0.025), 0, 0)
-                    Next
+                        For a = 1 To SideBlkXHoles(2) - 1
+                            skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(2) * a) - 0.025), 0, 0)
+                        Next
 
-                    'MsgBox("WIP")
-                    'For a = 1 To SideBlkXHoles(1) - 1
-                    '    skPoint = Part.SketchManager.CreatePoint((PanelWth / 1000 * FanNoX) - (WallWth / 2000) + (SideBlkXDist(1) * a) + 0.025, 0, 0)
-                    'Next
-
-                    'For a = 1 To SideBlkXHoles(2) - 1
-                    '    skPoint = Part.SketchManager.CreatePoint((PanelWth / 1000 * FanNoX) - (WallWth / 2000) + (SideBlkXDist(1) * a) + 0.025, 0, 0)
-                    'Next
-                End If
+                    End If
 
 
-                ' Zoom To Fit
-                boolstatus = Part.EditRebuild3()
+                    ' Zoom To Fit
+                    boolstatus = Part.EditRebuild3()
                 Part.ViewZoomtofit2()
 
                 boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
@@ -2286,9 +2321,9 @@ clrslc:
 
                 boolstatus = Part.Extension.SelectByID2("Width@BaseFlange@_02A_Top & Bot_L.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
                 myDimension = Part.Parameter("Width@BaseFlange")
-                myDimension.SystemValue = SideClear / 1000 + (PanelWth * (FanNoX / 2000))
-                BTLth = SideClear / 1000 + (PanelWth * (FanNoX / 2000))
-                Part.ClearSelection2(True)
+                    myDimension.SystemValue = SideClear / 1000 + (PanelWth * (FanNoX / 2000))
+                    BTLth = SideClear / 1000 + (PanelWth * (FanNoX / 2000))
+                    Part.ClearSelection2(True)
 
 
                     TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
@@ -2311,24 +2346,16 @@ clrslc:
                         skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - 0.025 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a)), 0, 0)
                     Next
                 Else
+                        For a = 1 To SideBlkXHoles(1) - 1
+                            skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - 0.025 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a)), 0, 0)
+                        Next
+                        skPoint = Part.SketchManager.CreatePoint((-BTLth / 2) + 0.025 + 0.05 + (PanelWth / 1000 * (FanNoX / 2)) + (SideBlkXDist(1) * (SideBlkXHoles(1) - 1)), 0, 0)
 
-                    For a = 1 To SideBlkXHoles(1) - 2
-                        skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - 0.025 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a)), 0, 0)
-                    Next
-
-                    For a = 1 To SideBlkXHoles(2) - 1
+                        For a = 1 To SideBlkXHoles(2) - 1
                         skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - 0.025 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(2) * a)), 0, 0)
                     Next
-                    'MsgBox("WIP")
-                    'For a = 1 To SideBlkXHoles(1) - 1
-                    '    skPoint = Part.SketchManager.CreatePoint((PanelWth / 1000 * FanNoX) - (WallWth / 2000) + (SideBlkXDist(1) * a) + 0.025, 0, 0)
-                    'Next
 
-                    'For a = 1 To SideBlkXHoles(2) - 1
-                    '    skPoint = Part.SketchManager.CreatePoint((PanelWth / 1000 * FanNoX) - (WallWth / 2000) + (SideBlkXDist(1) * a) + 0.025, 0, 0)
-                    'Next
-
-                End If
+                    End If
 
 
                 ' Zoom To Fit
@@ -2350,9 +2377,9 @@ clrslc:
 
                 boolstatus = Part.Extension.SelectByID2("Width@BaseFlange@_02A_Top & Bot_L.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
                 myDimension = Part.Parameter("Width@BaseFlange")
-                myDimension.SystemValue = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
-                BTLth = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
-                Part.ClearSelection2(True)
+                    myDimension.SystemValue = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
+                    BTLth = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
+                    Part.ClearSelection2(True)
 
                     TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
@@ -2367,32 +2394,25 @@ clrslc:
                     skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - 0.025 - (b * (MotorShtXHoleDist * (MotorShtXHole - 1))) - (0.05 * b)), 0, 0)
                 Next
 
-                'Blank Holes
-                If BlkNosX = 1 Then
-                    For a = 1 To SideBlkXHoles(1) - 2
-                        skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a) - 0.025), 0, 0)
-                    Next
-                Else
-                    For a = 1 To SideBlkXHoles(1) - 2
-                        skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a) - 0.025), 0, 0)
-                    Next
+                    'Blank Holes
+                    If BlkNosX = 1 Then
+                        For a = 1 To SideBlkXHoles(1) - 2
+                            skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a) - 0.025), 0, 0)
+                        Next
+                    Else
+                        For a = 1 To SideBlkXHoles(1) - 1
+                            skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a) - 0.025), 0, 0)
+                        Next
+                        skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * (SideBlkXHoles(1) - 1)) - 0.025 - 0.05), 0, 0)
 
-                    For a = 1 To SideBlkXHoles(2) - 1
-                        skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(2) * a) - 0.025), 0, 0)
-                    Next
-                    'MsgBox("WIP")
-                    'For a = 1 To SideBlkXHoles(1) - 1
-                    '    skPoint = Part.SketchManager.CreatePoint((PanelWth / 1000 * FanNoX) - (WallWth / 2000) + (SideBlkXDist(1) * a) + 0.025, 0, 0)
-                    'Next
-
-                    'For a = 1 To SideBlkXHoles(2) - 1
-                    '    skPoint = Part.SketchManager.CreatePoint((PanelWth / 1000 * FanNoX) - (WallWth / 2000) + (SideBlkXDist(1) * a) + 0.025, 0, 0)
-                    'Next
-                End If
+                        For a = 1 To SideBlkXHoles(2) - 1
+                            skPoint = Part.SketchManager.CreatePoint(-((BTLth / 2) - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(2) * a) - 0.025 - 0.05), 0, 0)
+                        Next
+                    End If
 
 
-                ' Zoom To Fit
-                boolstatus = Part.EditRebuild3()
+                    ' Zoom To Fit
+                    boolstatus = Part.EditRebuild3()
                 Part.ViewZoomtofit2()
 
                 boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
@@ -2410,9 +2430,9 @@ clrslc:
 
                 boolstatus = Part.Extension.SelectByID2("Width@BaseFlange@_02A_Top & Bot_L.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
                 myDimension = Part.Parameter("Width@BaseFlange")
-                myDimension.SystemValue = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
-                BTLth = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
-                Part.ClearSelection2(True)
+                    myDimension.SystemValue = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
+                    BTLth = (WallWth / 1000) - (SideClear / 1000 + (PanelWth * (FanNoX / 2000)))
+                    Part.ClearSelection2(True)
 
                     TopBotLHoles(BTLth * 1000)                                                     '4.2mm Holes
 
@@ -2435,11 +2455,12 @@ clrslc:
                         skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - 0.025 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a)), 0, 0)
                     Next
                 Else
-                    For a = 1 To SideBlkXHoles(1) - 2
-                        skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - 0.025 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a)), 0, 0)
-                    Next
+                        For a = 1 To SideBlkXHoles(1) - 1
+                            skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - 0.025 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * a)), 0, 0)
+                        Next
+                        skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - 0.025 - 0.05 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(1) * (SideBlkXHoles(1) - 1))), 0, 0)
 
-                    For a = 1 To SideBlkXHoles(2) - 1
+                        For a = 1 To SideBlkXHoles(2) - 1
                         skPoint = Part.SketchManager.CreatePoint(((BTLth / 2) - 0.025 - (((PanelWth / 1000 * (FanNoX / 2)))) - (SideBlkXDist(2) * a)), 0, 0)
                     Next
 
@@ -2751,7 +2772,7 @@ clrslc:
             longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_02B_Top_L2.SLDPRT", 0, 0)
             swApp.CloseAllDocuments(True)
 
-            TopBotLDrawings()
+            TopBot2ALDrawings(BTLth)
             TopBot2BLDrawings((WallWth / 1000) - BTLth)
             swApp.CloseAllDocuments(True)
         End If
@@ -2776,7 +2797,7 @@ clrslc:
 #End Region
 
 #Region "Vertical C"
-    Public Sub VerCChannels(FanNoY As Integer, FanNoX As Integer, PnlHgt As Decimal, BlkNoY As Integer, TopClear As Decimal, SideClear As Decimal, BlkHt() As Decimal)
+    Public Sub VerCChannels(FanNoY As Integer, FanNoX As Integer, PnlHgt As Decimal, BlkNoY As Integer, TopClear As Decimal, SideClear As Decimal, BlkHt() As Decimal, AHUDoor As Boolean, BlkNoX As Integer)
 
         Dim FanY As Integer = FanNoY
         If FanNoX = 1 And SideClear = 0 Then
@@ -2793,83 +2814,95 @@ clrslc:
             myDimension.SystemValue = (WallHt - 4) / 1000
             Part.ClearSelection2(True)
 
-            VerticalCSlots04A(FanY, BlkNoY, PnlHgt, BlkHt)
+            VerticalCSlots04A(FanY, BlkNoY, PnlHgt, BlkHt, SideClear)
 
             ' Zoom To Fit
             boolstatus = Part.EditRebuild3()
             Part.ViewZoomtofit2()
             boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
 
+
+            VerCQty = 0
+            If BlkNoX > 1 Then
+                If AHUDoor = True Then
+                    VerCQty = 0
+                Else
+                    VerCQty = BlkNoX
+                End If
+            End If
+
             ' Save As
             longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_04A_Vertical Channel.SLDPRT", 0, 0)
-            VerCDrawings(FanNoX)
+            VerCDrawings(FanNoX, VerCQty, SideClear)
 
             swApp.CloseDoc(True)
-        Else
+            Else
 
-            MsgBox("Wall Height exceeds Maximum Height of the Vertical C" & vbNewLine & "Automation will continue but Vertical C Flat Pattern won't fit on the nesting sheets")
+                MsgBox("Wall Height exceeds Maximum Height of the Vertical C" & vbNewLine & "Automation will continue but Vertical C Flat Pattern won't fit on the nesting sheets")
 
 #Region "Two vertical C"
 
-            'Part 1--------------------------------------------------------------------------------------------
-            Part = swApp.OpenDoc6(LibPath & "\Panel - Sample\" & "_04A_Vertical Channel.SLDPRT", 1, 0, "", longstatus, longwarnings)
-            swApp.ActivateDoc2("_04A_Vertical Channel.SLDPRT", False, longstatus)
-            Part = swApp.ActiveDoc
-            boolstatus = Part.Extension.SelectByID2("Height@BaseFlange@_04A_Vertical Channel.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
-            myDimension = Part.Parameter("Height@BaseFlange")
-            myDimension.SystemValue = (WallHt - 4) / 1000
-            Part.ClearSelection2(True)
+                'Part 1--------------------------------------------------------------------------------------------
+                Part = swApp.OpenDoc6(LibPath & "\Panel - Sample\" & "_04A_Vertical Channel.SLDPRT", 1, 0, "", longstatus, longwarnings)
+                swApp.ActivateDoc2("_04A_Vertical Channel.SLDPRT", False, longstatus)
+                Part = swApp.ActiveDoc
+                boolstatus = Part.Extension.SelectByID2("Height@BaseFlange@_04A_Vertical Channel.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                myDimension = Part.Parameter("Height@BaseFlange")
+                myDimension.SystemValue = (WallHt - 4) / 1000
+                Part.ClearSelection2(True)
 
-            VerticalCSlots04A(FanY, BlkNoY, PnlHgt, BlkHt)
-
-            'boolstatus = Part.Extension.SelectByID2("Height@Slot 02@_04A_Vertical Channel.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
-            'myDimension = Part.Parameter("Height@Slot 02")
-            'myDimension.SystemValue = PnlHgt / 1000
-            'Part.ClearSelection2(True)
-
-            'VerticalCSlots04A(FanY, BlkNoY)
+            VerticalCSlots04A(FanY, BlkNoY, PnlHgt, BlkHt, SideClear)
 
             ' Zoom To Fit
             boolstatus = Part.EditRebuild3()
-            Part.ViewZoomtofit2()
-            boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
+                Part.ViewZoomtofit2()
+                boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
+
+            VerCQty = 0
+            If BlkNoX > 1 Then
+                If AHUDoor = True Then
+                    VerCQty = 0
+                Else
+                    VerCQty = BlkNoX
+                End If
+            End If
 
             ' Save As
             longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_04A_Vertical Channel.SLDPRT", 0, 0)
-            VerCDrawings(FanNoX)
+            VerCDrawings(FanNoX, 0, SideClear)
 
             swApp.CloseDoc(True)
 
 
-            ''04A & 04B -- 2 Parts--------------------------------------------------------------------------------------------
-            'Part = swApp.OpenDoc6(LibPath & "\Panel - Sample\" & "_04A_Vertical Channel.SLDPRT", 1, 0, "", longstatus, longwarnings)
-            'swApp.ActivateDoc2("_04A_Vertical Channel.SLDPRT", False, longstatus)
-            'Part = swApp.ActiveDoc
-            'boolstatus = Part.Extension.SelectByID2("Height@BaseFlange@_04A_Vertical Channel.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
-            'myDimension = Part.Parameter("Height@BaseFlange")
-            'myDimension.SystemValue = (WallHt - (PnlHgt + PnlHgt / 2) - 6) / 1000
-            'Part.ClearSelection2(True)
+                ''04A & 04B -- 2 Parts--------------------------------------------------------------------------------------------
+                'Part = swApp.OpenDoc6(LibPath & "\Panel - Sample\" & "_04A_Vertical Channel.SLDPRT", 1, 0, "", longstatus, longwarnings)
+                'swApp.ActivateDoc2("_04A_Vertical Channel.SLDPRT", False, longstatus)
+                'Part = swApp.ActiveDoc
+                'boolstatus = Part.Extension.SelectByID2("Height@BaseFlange@_04A_Vertical Channel.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                'myDimension = Part.Parameter("Height@BaseFlange")
+                'myDimension.SystemValue = (WallHt - (PnlHgt + PnlHgt / 2) - 6) / 1000
+                'Part.ClearSelection2(True)
 
 
-            '' Zoom To Fit
-            'boolstatus = Part.EditRebuild3()
-            'Part.ViewZoomtofit2()
-            'boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
+                '' Zoom To Fit
+                'boolstatus = Part.EditRebuild3()
+                'Part.ViewZoomtofit2()
+                'boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
 
-            '' Save As
-            'longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_04B_Vertical Channel_02.SLDPRT", 0, 0)
-            'VerCDrawings(FanNoX)
+                '' Save As
+                'longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_04B_Vertical Channel_02.SLDPRT", 0, 0)
+                'VerCDrawings(FanNoX)
 
-            'swApp.CloseDoc(True)
+                'swApp.CloseDoc(True)
 #End Region
 
-        End If
-        ' Close Document
-        swApp.CloseAllDocuments(True)
+            End If
+            ' Close Document
+            swApp.CloseAllDocuments(True)
 
     End Sub
 
-    Public Sub VerticalCSlots04A(FansY As Integer, BlkNoY As Integer, PnlHgt As Decimal, BlkHt() As Decimal)
+    Public Sub VerticalCSlots04A(FansY As Integer, BlkNoY As Integer, PnlHgt As Decimal, BlkHt() As Decimal, SideClear As Decimal)
 
         For a = 0 To BlkNoY - 1
             HoleYBlk(a) = SlotsInterBoltingNumber(BlkHt(a), 25)
@@ -2906,14 +2939,19 @@ clrslc:
                     If a = 3 Then
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + 0.05 + Plus23, 0)
+
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + 0.05 + Plus23, 0)
                     Else
                         If FansY = 1 And a = 4 Then
                             GoTo SaveVerC
                         Else
                             If a > 3 Then
                                 skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + 0.05 + Plus23, 0)
+                                skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + 0.05 + Plus23, 0)
                             Else
                                 skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                                skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
                             End If
                         End If
                     End If
@@ -2921,6 +2959,7 @@ clrslc:
             Else                                    'Fans = 1
                 For a = 2 To MotorShtXHole - 2
                     skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                    skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
                 Next
             End If
 
@@ -2933,14 +2972,17 @@ clrslc:
                 For a = 2 To MotorShtYHole + FansY
                     If a Mod 3 = 0 Then
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
 
                         If a Mod 3 = 0 Then
                             NextFan = NextFan + 1
                         End If
 
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
                     Else
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
                     End If
                 Next
 
@@ -2949,8 +2991,20 @@ clrslc:
                     If a = 3 Then
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + 0.05 + Plus23, 0)
+
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + 0.05 + Plus23, 0)
                     Else
-                        skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                        If MotorShtYHole = 3 Then
+                            skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                            skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23 + 0.05, 0)
+                            skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                            skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23 + 0.05, 0)
+                        Else
+                            skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                            skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                        End If
+
                     End If
                 Next
             End If
@@ -2958,6 +3012,7 @@ clrslc:
             '------ Blanks
             For a = 1 To HoleYBlk(0) - 2
                 skPoint = Part.SketchManager.CreatePoint(-0.025, ((PnlHgt / 1000) * FansY) + (HoleYBlkDist(0) * a) + Plus23, 0)
+                skPoint = Part.SketchManager.CreatePoint(0.025, ((PnlHgt / 1000) * FansY) + (HoleYBlkDist(0) * a) + Plus23, 0)
             Next
 
         Else
@@ -2970,14 +3025,17 @@ clrslc:
                 For a = 2 To MotorShtYHole + FansY
                     If a Mod 3 = 0 Then
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
 
                         If a Mod 3 = 0 Then
                             NextFan = NextFan + 1
                         End If
 
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
                     Else
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + (NextFan * 0.05) + Plus23, 0)
                     End If
                 Next
 
@@ -2986,8 +3044,21 @@ clrslc:
                     If a = 3 Then
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
                         skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + 0.05 + Plus23, 0)
+
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + 0.05 + Plus23, 0)
                     Else
-                        skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                        If MotorShtYHole = 3 Then
+                            skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                            skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+
+                            skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23 + 0.05, 0)
+                            skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23 + 0.05, 0)
+                        Else
+                            skPoint = Part.SketchManager.CreatePoint(-0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                            skPoint = Part.SketchManager.CreatePoint(0.025, (MotorShtYHoleDist * a) + Plus23, 0)
+                        End If
+
                     End If
                 Next
             End If
@@ -2998,25 +3069,33 @@ clrslc:
                 If a = HoleYBlk(0) - 1 Then
                     skPoint = Part.SketchManager.CreatePoint(-0.025, ((PnlHgt / 1000) * FansY) + (HoleYBlkDist(0) * a) + Plus23, 0)
                     skPoint = Part.SketchManager.CreatePoint(-0.025, ((PnlHgt / 1000) * FansY) + (HoleYBlkDist(0) * a) + 0.05 + Plus23, 0)
+
+                    skPoint = Part.SketchManager.CreatePoint(0.025, ((PnlHgt / 1000) * FansY) + (HoleYBlkDist(0) * a) + Plus23, 0)
+                    skPoint = Part.SketchManager.CreatePoint(0.025, ((PnlHgt / 1000) * FansY) + (HoleYBlkDist(0) * a) + 0.05 + Plus23, 0)
                 Else
                     skPoint = Part.SketchManager.CreatePoint(-0.025, ((PnlHgt / 1000) * FansY) + (HoleYBlkDist(0) * a) + Plus23, 0)
+                    skPoint = Part.SketchManager.CreatePoint(0.025, ((PnlHgt / 1000) * FansY) + (HoleYBlkDist(0) * a) + Plus23, 0)
                 End If
             Next
 
             For a = 1 To HoleYBlk(1) - 1
                 skPoint = Part.SketchManager.CreatePoint(-0.025, ((PnlHgt / 1000) * FansY) + BlkHt(0) / 1000 + (HoleYBlkDist(1) * a) + Plus23, 0)
+                skPoint = Part.SketchManager.CreatePoint(0.025, ((PnlHgt / 1000) * FansY) + BlkHt(0) / 1000 + (HoleYBlkDist(1) * a) + Plus23, 0)
             Next
 
             If BlkNoY > 2 Then
                 If HoleYBlk(2) = 1 Then
                     skPoint = Part.SketchManager.CreatePoint(-0.025, ((PnlHgt / 1000) * FansY) + BlkHt(0) / 1000 + BlkHt(1) / 1000 + Plus23, 0)
+                    skPoint = Part.SketchManager.CreatePoint(0.025, ((PnlHgt / 1000) * FansY) + BlkHt(0) / 1000 + BlkHt(1) / 1000 + Plus23, 0)
                 End If
 
                 For a = 1 To HoleYBlk(2) - 1
                     If a = 1 Then
                         skPoint = Part.SketchManager.CreatePoint(-0.025, ((PnlHgt / 1000) * FansY) + BlkHt(0) / 1000 + BlkHt(1) / 1000 + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, ((PnlHgt / 1000) * FansY) + BlkHt(0) / 1000 + BlkHt(1) / 1000 + Plus23, 0)
                     Else
                         skPoint = Part.SketchManager.CreatePoint(-0.025, ((PnlHgt / 1000) * FansY) + BlkHt(0) / 1000 + BlkHt(1) / 1000 + (HoleYBlkDist(2) * a) + Plus23, 0)
+                        skPoint = Part.SketchManager.CreatePoint(0.025, ((PnlHgt / 1000) * FansY) + BlkHt(0) / 1000 + BlkHt(1) / 1000 + (HoleYBlkDist(2) * a) + Plus23, 0)
                     End If
                 Next
             End If
@@ -3027,10 +3106,32 @@ clrslc:
         boolstatus = Part.EditRebuild3()
 
         '------------------------------------------------- Side Holes -------------------------------------------------
-        If FansY = 1 And BlkNoY <= 1 Then
+        If FansY = 1 And BlkNoY < 1 Then
             boolstatus = Part.Extension.SelectByID2("SideHoles", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
             Part.EditSuppress2()
             Part.ClearSelection2(True)
+
+            GoTo SaveVerC
+        ElseIf FansY = 1 And BlkNoY = 1 Then
+
+            boolstatus = Part.Extension.SelectByID2("Side Hole Pattern", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditSuppress2()
+            Part.ClearSelection2(True)
+            boolstatus = Part.Extension.SelectByID2("SideSkt", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditSuppress2()
+
+            boolstatus = Part.Extension.SelectByID2("SideHole", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditSketch()
+
+            boolstatus = Part.Extension.SelectByID2("FirstHole@SideHole@_04A_Vertical Channel.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+            myDimension = Part.Parameter("FirstHole@SideHole")
+            myDimension.SystemValue = (PnlHgt / 1000) - 0.002
+            Part.ClearSelection2(True)
+
+            Part.ClearSelection2(True)
+            boolstatus = Part.EditRebuild3()
+            Part.ShowNamedView2("*Isometric", 7)
+            Part.ViewZoomtofit2()
 
             GoTo SaveVerC
         End If
@@ -3072,6 +3173,7 @@ clrslc:
 
         Part.ClearSelection2(True)
         boolstatus = Part.EditRebuild3()
+        Part.ShowNamedView2("*Isometric", 7)
         Part.ViewZoomtofit2()
 
 SaveVerC:
@@ -3079,10 +3181,6 @@ SaveVerC:
 
     End Sub
 
-    Public Sub VerticalCSlots04B(FanNoY As Integer, BlkNoY As Integer)
-        Exit Sub
-
-    End Sub
 
 #End Region
 
@@ -3103,10 +3201,23 @@ SaveVerC:
             myDimension = Part.Parameter("Dist@HorCHoles")
             myDimension.SystemValue = MotorShtXHoleDist
             Part.ClearSelection2(True)
+            Part.EditRebuild3()
+
+            If MotorShtYHole = 3 Then
+                boolstatus = Part.Extension.SelectByID2("HorCHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditSuppress2()
+                Part.ClearSelection2(True)
+                Part.EditRebuild3()
+
+                boolstatus = Part.Extension.SelectByID2("CenterHole", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditUnsuppress2()
+                Part.ClearSelection2(True)
+                Part.EditRebuild3()
+
+            End If
 
             Part.ViewZoomtofit2()
             boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
-
 
             ' Save As
             longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_05_Hor_C_Support.SLDPRT", 0, 0)
@@ -3116,7 +3227,7 @@ SaveVerC:
 
             Dim DwgQty As Integer
             If BlkNosY > 1 Then
-                DwgQty = FanNoX * FanNoY + (BlkNosY / 2)
+                DwgQty = FanNoX * FanNoY * BlkNosY
             Else
                 DwgQty = FanNoX * FanNoY
             End If
@@ -3126,13 +3237,17 @@ SaveVerC:
         End If
     End Sub
 
-    Public Sub HorCChannel2(Sdclr As Decimal, FanNoY As Integer, BlkNosY As Integer, FanNoX As Integer, PushSide As Boolean, BlkNosX As Integer, AHUDoor As Boolean)
+    Public Sub HorCChannel2(Sdclr As Decimal, FanNoY As Integer, BlkNosY As Integer, FanNoX As Integer, PushSide As Boolean, BlkNosX As Integer, AHUDoor As Boolean, SideClear As Decimal)
+
+        If Sdclr < 0.15 Then
+            Exit Sub
+        End If
 
         Part = swApp.OpenDoc6(LibPath & "\Panel - Sample\" & "_06A_Hor_C_Support_2.SLDPRT", 1, 0, "", longstatus, longwarnings)
         swApp.ActivateDoc2("_06A_Hor_C_Support_2.SLDPRT", False, longstatus)
         Part = swApp.ActiveDoc
 
-        boolstatus = Part.Extension.SelectByID2("Width@Base@_06_Hor_C_Support_2.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+        boolstatus = Part.Extension.SelectByID2("Width@Base@_06A_Hor_C_Support_2.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
         myDimension = Part.Parameter("Width@Base")
         myDimension.SystemValue = Sdclr
         Part.ClearSelection2(True)
@@ -3140,7 +3255,7 @@ SaveVerC:
         If AHUDoor = True Then
             If DoorXHoles > 3 Then
                 'Re-Dim
-                boolstatus = Part.Extension.SelectByID2("Dist@HorCHoles@_06_Hor_C_Support.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Dist@HorCHoles@_06A_Hor_C_Support_2.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
                 myDimension = Part.Parameter("Dist@HorCHoles")
                 myDimension.SystemValue = DoorXHoleDist
                 Part.ClearSelection2(True)
@@ -3154,7 +3269,36 @@ SaveVerC:
                 Part.ClearSelection2(True)
             End If
         Else
+
             If BlkNosX >= 1 Then
+                If BlkNosX > 1 Then
+                    'Re-Dim
+                    boolstatus = Part.Extension.SelectByID2("Dist@HorCHoles@_06A_Hor_C_Support_2.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                    myDimension = Part.Parameter("Dist@HorCHoles")
+                    myDimension.SystemValue = SideBlkXDist(BlkNosX - 1)
+                    Part.ClearSelection2(True)
+
+                    boolstatus = Part.Extension.SelectByID2("Slots", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
+                    Part.EditSuppress2()
+                    Part.ClearSelection2(True)
+
+                    boolstatus = Part.Extension.SelectByID2("SlotPattern", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
+                    Part.EditSuppress2()
+                    Part.ClearSelection2(True)
+                    Part.ClearSelection2(True)
+
+                    boolstatus = Part.Extension.SelectByID2("HorCHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                    Part.EditSketch()
+                    boolstatus = Part.Extension.SelectByID2("CentreDist@HorCHoles@_06A_Hor_C_Support_2.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                    myDimension = Part.Parameter("CentreDist@HorCHoles")
+                    myDimension.SystemValue = 0
+                    Part.ClearSelection2(True)
+
+                    Part.EditRebuild3()
+
+                    GoTo HoRCOver
+                End If
+
                 If SideBlkXHoles(BlkNosX) > 3 Then
                     'Re-Dim
                     boolstatus = Part.Extension.SelectByID2("Dist@HorCHoles@_06_Hor_C_Support.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
@@ -3171,38 +3315,64 @@ SaveVerC:
                     Part.ClearSelection2(True)
                 End If
             End If
-        End If
 
-        Part.ViewZoomtofit2()
-        boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
+            If SideClear <= 0 Then
+                'Re-Dim
+                boolstatus = Part.Extension.SelectByID2("Dist@HorCHoles@_06A_Hor_C_Support_2.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                myDimension = Part.Parameter("Dist@HorCHoles")
+                myDimension.SystemValue = MotorShtXHoleDist
+                Part.ClearSelection2(True)
 
+                boolstatus = Part.Extension.SelectByID2("SlotPattern", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditSuppress2()
+                Part.ClearSelection2(True)
+                Part.ClearSelection2(True)
 
-        Part.ClearSelection2(True)
-        Part.ViewZoomtofit2()
+                boolstatus = Part.Extension.SelectByID2("HorCHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditSketch()
+                boolstatus = Part.Extension.SelectByID2("CentreDist@HorCHoles@_06A_Hor_C_Support_2.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                myDimension = Part.Parameter("CentreDist@HorCHoles")
+                myDimension.SystemValue = 0.024
+                Part.ClearSelection2(True)
 
-        ' Save As
-        longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 0, 0)
-        swApp.CloseAllDocuments(True)
-
-        Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 1, 0, "", longstatus, longwarnings)
-
-        Dim DwgQty As Integer
-        If AHUDoor = True Then
-            DwgQty = 1
-        Else
-            If PushSide = True Then
-                DwgQty = FanNoY + BlkNosY - 1
-            Else
-                DwgQty = (FanNoY + BlkNosY - 1) * 2
+                Part.EditRebuild3()
             End If
         End If
 
-        CreateDrawings(AHUName & "_05A_Hor_C_Support_2", DwgQty, Sdclr)
-        swApp.CloseAllDocuments(True)
+HoRCOver:
+
+            boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
+
+            Part.ClearSelection2(True)
+            Part.ViewZoomtofit2()
+
+            ' Save As
+            longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 0, 0)
+            swApp.CloseAllDocuments(True)
+
+            Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 1, 0, "", longstatus, longwarnings)
+
+            Dim DwgQty As Integer
+            If AHUDoor = True Then
+                DwgQty = 1
+            Else
+                If PushSide = True Then
+                    DwgQty = FanNoY + BlkNosY - 1
+                Else
+                    DwgQty = (FanNoY + BlkNosY - 1) * 2
+                End If
+            End If
+
+            CreateDrawings(AHUName & "_05A_Hor_C_Support_2", DwgQty, Sdclr)
+            swApp.CloseAllDocuments(True)
 
     End Sub
 
     Public Sub HorCChannel3(EdBlkWth As Decimal, FanNoY As Integer, BlkNosY As Integer, FanNoX As Integer, BlkNosX As Integer)
+
+        If EdBlkWth < 0.15 Then
+            Exit Sub
+        End If
 
         Part = swApp.OpenDoc6(LibPath & "\Panel - Sample\" & "_06A_Hor_C_Support_2.SLDPRT", 1, 0, "", longstatus, longwarnings)
         swApp.ActivateDoc2("_06A_Hor_C_Support_2.SLDPRT", False, longstatus)
@@ -3233,6 +3403,12 @@ SaveVerC:
                 Part.EditSuppress2()
                 Part.ClearSelection2(True)
             Else
+                If SideBlkXHoles(d) = 1 Then
+                    boolstatus = Part.Extension.SelectByID2("SlotPattern", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
+                    Part.EditSuppress2()
+                    Part.ClearSelection2(True)
+                End If
+
                 boolstatus = Part.Extension.SelectByID2("HorCSlots", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
                 Part.EditSuppress2()
                 Part.ClearSelection2(True)
@@ -3268,8 +3444,6 @@ SaveVerC:
         swApp.CloseAllDocuments(True)
 
     End Sub
-
-
 
 #End Region
 
@@ -3417,13 +3591,6 @@ SaveVerC:
             InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05_Hor_C_Support.SLDPRT", 0, "", False, "", 3.9, 3.9, 3.9)
         End If
 
-        'If (FanNoY + BlkNosY - 1) > 0 Then
-        '    For a = 1 To (FanNoY + BlkNosY - 1)
-        '        InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 0, "", False, "", 2.2, 2.2, 2.2)
-        '    Next
-        '    'InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 0, "", False, "", 2.3, 2.3, 2.3)
-        'End If
-
         If BlkNosY = 0 Then
             If FanNoY > 1 Then
                 InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 0, "", False, "", 2.2, 2.2, 2.2)
@@ -3433,6 +3600,8 @@ SaveVerC:
             If FanNoY >= 1 Then
                 InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 0, "", False, "", 2.2, 2.2, 2.2)
                 InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 0, "", False, "", 2.3, 2.3, 2.2)
+                InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05B_Hor_C_Support_3.SLDPRT", 0, "", False, "", 2.5, 2.3, 2.2)
+                InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05B_Hor_C_Support_3.SLDPRT", 0, "", False, "", 2.5, 2.3, 2.2)
             End If
         Else
             InsComp = Assy.AddComponent5(SaveFolder & "\AHU\" & AHUName & "_05A_Hor_C_Support_2.SLDPRT", 0, "", False, "", 2.2, 2.2, 2.2)
@@ -3842,6 +4011,7 @@ FansPattern:
             myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
             Part.ClearSelection2(True)
 
+            'Right plane mates
             If PushSide = True Then
                 If FanNoY > 1 Then
                     boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
@@ -3856,15 +4026,22 @@ FansPattern:
                 End If
             Else
                 boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_Motor Sub Assembly-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                If SideClear <= 0 Then
+                    'boolstatus = Part.Extension.SelectByID2("Right Plane", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    GoTo TPMates
+                Else
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_Motor Sub Assembly-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                End If
                 myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                 Part.ClearSelection2(True)
             End If
 
+TPMates:
+            'Top plane mates
             If PushSide = True Then
-                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                 Part.ClearSelection2(True)
 
                 If TopClear < 0 Then
@@ -3902,25 +4079,39 @@ FansPattern:
                 End If
 
             Else
+
                 boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                 boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
                 myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                 Part.ClearSelection2(True)
+                Part.ViewZoomtofit2()
+                Part.EditRebuild3()
 
-                If BlkOne = 400 Then
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05_Hor_C_Support-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, (PnlHt * FanNoY) + 0.4 - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                    Part.ClearSelection2(True)
-
-                    boolstatus = Part.Extension.SelectByID2("X-Axis", "AXIS", 0, 0, 0, True, 2, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2(AHUName & "_05_Hor_C_Support-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                    myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoX, PnlWth, 0, 0, True, True, "NULL", "NULL", False)
+                If SideClear <= 0 Then
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 1, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                     Part.ClearSelection2(True)
                     Part.ViewZoomtofit2()
+                    Part.EditRebuild3()
                 End If
 
-                If TopClear < 0 Then
+
+
+                If BlkOne = 400 Then
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05_Hor_C_Support-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, (PnlHt * FanNoY) + 0.4 - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                        Part.ClearSelection2(True)
+
+                        boolstatus = Part.Extension.SelectByID2("X-Axis", "AXIS", 0, 0, 0, True, 2, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2(AHUName & "_05_Hor_C_Support-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                        myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoX, PnlWth, 0, 0, True, True, "NULL", "NULL", False)
+                        Part.ClearSelection2(True)
+                        Part.ViewZoomtofit2()
+                    End If
+
+                If TopClear <= 0 Then
                     boolstatus = Part.Extension.SelectByID2("X-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
                     boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, True, 4, Nothing, 0)
                     boolstatus = Part.Extension.SelectByID2(AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
@@ -3940,16 +4131,20 @@ FansPattern:
                     Part.ViewZoomtofit2()
                 Else
                     boolstatus = Part.Extension.SelectByID2("X-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, True, 4, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2(AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                    myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoX, PnlWth, FanNoY + BlkNosY - 1, BlkOne / 1000, True, True, "NULL", "NULL", False)
-                    Part.ClearSelection2(True)
-                    Part.ViewZoomtofit2()
+                        boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, True, 4, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2(AHUName & "_05_Hor_C_Support-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                    If SideClear <= 0 Then
+                        myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoX - 2, PnlWth, FanNoY + BlkNosY - 1, BlkOne / 1000, True, True, "NULL", "NULL", False)
+                    Else
+                        myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoX, PnlWth, FanNoY + BlkNosY - 1, BlkOne / 1000, True, True, "NULL", "NULL", False)
+                        End If
+                        Part.ClearSelection2(True)
+                        Part.ViewZoomtofit2()
+                    End If
+
                 End If
 
-            End If
-
-            If BlkOne = 400 Then
+                If BlkOne = 400 Then
                 boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05_Hor_C_Support-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                 boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
                 myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
@@ -4296,42 +4491,43 @@ FansPattern:
 
 #Region "Side Blanks A1_B1"
         'ONE SIDE BLANK Mates
-        'Mates RIGHT SIDE
-        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_07_Side Blank_A1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt / 2) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
-        Part.ClearSelection2(True)
+        If AssyComponents.Contains(AHUName & "_07_Side Blank_A1.SLDPRT") Then
+            'Mates RIGHT SIDE
+            boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_07_Side Blank_A1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+            boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+            myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt / 2) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+            Part.ClearSelection2(True)
 
-        boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_07_Side Blank_A1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-        boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-        myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, swMateAlign_e.swMateAlignALIGNED, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Front Plane Coincident
-        Part.ClearSelection2(True)
+            boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_07_Side Blank_A1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+            boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+            myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, swMateAlign_e.swMateAlignALIGNED, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Front Plane Coincident
+            Part.ClearSelection2(True)
 
-        boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-        boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (WallWth / 2000) - (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
-        Part.ClearSelection2(True)
+            boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+            boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+            myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (WallWth / 2000) - (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+            Part.ClearSelection2(True)
 
-        Part.EditRebuild3()
+            Part.EditRebuild3()
 
-        'Mates LEFT SIDE
-        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt / 2) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
-        Part.ClearSelection2(True)
+            'Mates LEFT SIDE
+            boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+            boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+            myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt / 2) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+            Part.ClearSelection2(True)
 
-        boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-        boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-        myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, swMateAlign_e.swMateAlignALIGNED, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Front Plane Coincident
-        Part.ClearSelection2(True)
+            boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+            boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+            myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, swMateAlign_e.swMateAlignALIGNED, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Front Plane Coincident
+            Part.ClearSelection2(True)
 
-        boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-        boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (WallWth / 2000) - (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
-        Part.ClearSelection2(True)
+            boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+            boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+            myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (WallWth / 2000) - (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+            Part.ClearSelection2(True)
 
-        Part.EditRebuild3()
-
+            Part.EditRebuild3()
+        End If
 
         'SideBlank B
         If AssyComponents.Contains(AHUName & "_07_Side Blank_B1.SLDPRT") Then
@@ -4981,11 +5177,11 @@ CornerBlanks:
                 boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_09_Corner Blank_1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                 boolstatus = Part.Extension.SelectByID2("Top Plane", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
                 'If BlkTwo = 0 Then
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
-                    'Else
-                    '    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 1000) + (BlkTwo / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
-                    'End If
-                    Part.ClearSelection2(True)
+                'myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+                'Else
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 1000) + (BlkTwo / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+                'End If
+                Part.ClearSelection2(True)
 
                 boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                 boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
@@ -5002,20 +5198,22 @@ CornerBlanks:
 
                     boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_09_Corner Blank_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                     boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    If AssyComponents.Contains(AHUName & "_09_Corner Blank_3.SLDPRT") Then
-                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 1000) + (BlkTwo / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
-                    Else
-                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
-                    End If
+                    'If AssyComponents.Contains(AHUName & "_09_Corner Blank_3.SLDPRT") Then
+                    '    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 1000) + (BlkTwo / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+                    'Else
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+                    'End If
                     Part.ClearSelection2(True)
+
 
                     boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                     boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    If AssyComponents.Contains(AHUName & "_09_Corner Blank_3.SLDPRT") Then
-                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (WallWth / 2000) - (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
-                    Else
-                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (WallWth / 2000) - (EndBlankWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
-                    End If
+                    'If AssyComponents.Contains(AHUName & "_09_Corner Blank_3.SLDPRT") Then
+                    '    ' myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (WallWth / 2000) - (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                    'Else
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (WallWth / 2000) - (EndBlankWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                    'End If
+
                     Part.ClearSelection2(True)
 
                     boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_09_Corner Blank_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
@@ -5030,8 +5228,8 @@ CornerBlanks:
 
                     boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_09_Corner Blank_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                     boolstatus = Part.Extension.SelectByID2("Top Plane", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
-                    'myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 1000) + (BlkTwo / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+                    'myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) + (BlkOne / 1000) + (BlkTwo / 2000) - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
                     Part.ClearSelection2(True)
 
                     boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
@@ -5070,7 +5268,6 @@ CornerBlanks:
                 GoTo TopLAssem
             End If
         End If
-
 
         If SideClear > PnlWth Then
             If TopClear > PnlHt Then
@@ -5235,11 +5432,11 @@ CornerBlanks:
 
                 boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                 boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                If AssyComponents.Contains(AHUName & "_09_Corner Blank_2.SLDPRT") Then
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (PnlWth * FanNoX / 2) + (PnlWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
-                Else
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (PnlWth * FanNoX / 2) + (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
-                End If
+                'If AssyComponents.Contains(AHUName & "_09_Corner Blank_2.SLDPRT") Then
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (PnlWth * FanNoX / 2) + (PnlWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                'Else
+                '    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (PnlWth * FanNoX / 2) + (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                'End If
                 Part.ClearSelection2(True)
 
                 'Corner Blank-1-2"
@@ -5250,11 +5447,11 @@ CornerBlanks:
 
                 boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                 boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                If AssyComponents.Contains(AHUName & "_09_Corner Blank_2.SLDPRT") Then
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlWth * FanNoX / 2) + (PnlWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
-                Else
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlWth * FanNoX / 2) + (SideClear / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
-                End If
+                'If AssyComponents.Contains(AHUName & "_09_Corner Blank_2.SLDPRT") Then
+                '    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlWth * FanNoX / 2) + (PnlWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                'Else
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlWth * FanNoX / 2) + (PnlWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                'End If
                 Part.ClearSelection2(True)
 
                 Part.EditRebuild3()
@@ -5307,6 +5504,52 @@ CornerBlanks:
 
                     Part.EditRebuild3()
                 End If
+
+                If AssyComponents.Contains(AHUName & "_09_Corner Blank_3.SLDPRT") Then
+                    'Corner Blank-3-1"
+                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_09_Corner Blank_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) - 0.025 + (BlkOne / 2000), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+                    Part.ClearSelection2(True)
+
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    If AssyComponents.Contains(AHUName & "_09_Corner Blank_2.SLDPRT") Then
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (PnlWth * FanNoX / 2) + (PnlWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                    Else
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, False, (PnlWth * FanNoX / 2) + PnlWth + ((SideClear - PnlWth) / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                    End If
+                    Part.ClearSelection2(True)
+
+                    'Corner Blank-3-2"
+                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_09_Corner Blank_3-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlHt * FanNoY) - 0.025 + (BlkOne / 2000), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '------Top Plane distance
+                    Part.ClearSelection2(True)
+
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_3-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    If AssyComponents.Contains(AHUName & "_09_Corner Blank_2.SLDPRT") Then
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlWth * FanNoX / 2) + (PnlWth / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                    Else
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, swMateAlign_e.swMateAlignALIGNED, True, (PnlWth * FanNoX / 2) + PnlWth + ((SideClear - PnlWth) / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus) '-----------Right Plane distance 
+                    End If
+                    Part.ClearSelection2(True)
+
+                    Part.EditRebuild3()
+
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_09_Corner Blank_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, swMateAlign_e.swMateAlignALIGNED, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Front Plane Coincident
+                    Part.ClearSelection2(True)
+
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_09_Corner Blank_3-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, swMateAlign_e.swMateAlignALIGNED, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Front Plane Coincident
+                    Part.ClearSelection2(True)
+                    Part.EditRebuild3()
+                End If
+
 #End Region
             End If
 
@@ -5428,7 +5671,6 @@ CornerBlanks:
 #End Region
             GoTo TopLAssem
         End If
-
 
 #Region "SINGLE CORNER BLANK Mates"
         'RIGHT SIDE
@@ -5657,8 +5899,6 @@ TopLAssem:
             Part.EditRebuild3()
         End If
 
-
-
 SideLAssem:
         '--------------------------------------------------------------------Side L---------------------------------------------------------------------------------------------
         If AssyComponents.Contains(AHUName & "_03B_Side_L2_Right.SLDPRT") Then
@@ -5718,11 +5958,11 @@ SideLAssem:
 
         boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_10_Base_Stand-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
         boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_Motor Sub Assembly-1@" & AHUName & "_AHU Final Assembly/" & AHUName & "_" & ArtNo & "-1@" & AHUName & "_Motor Sub Assembly/" & MotorDia & "mm_10_C Channel-1@" & AHUName & "_" & ArtNo & "", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-        'If AHUDoor = True Then
-        '    myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Right Plane Coincident
-        'Else
-        myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 1, True, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Right Plane Coincident
-        'End If
+        If SideClear = 0 Then
+            myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Right Plane Coincident
+        Else
+            myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 1, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Right Plane Coincident
+        End If
         Part.ClearSelection2(True)
 
         If WallWth > MaxSecLth3mm Then
@@ -5780,8 +6020,8 @@ SideLAssem:
                 myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                 Part.ClearSelection2(True)
 
-                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_09_Corner Blank_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_09_Corner Blank_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
                 myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, 0.2, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                 Part.ClearSelection2(True)
 
@@ -5790,8 +6030,51 @@ SideLAssem:
                 myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                 Part.ClearSelection2(True)
             Else
-                'boolstatus = Part.Extension.SelectByID2(AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                'Part.EditDelete()
+
+                'Right Side
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05B_Hor_C_Support_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05B_Hor_C_Support_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05B_Hor_C_Support_3-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2(AHUName & "_05B_Hor_C_Support_3-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                Part.ClearSelection2(True)
+                Part.ViewZoomtofit2()
+
+                'Left Side
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2(AHUName & "_05B_Hor_C_Support_3-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                Part.ClearSelection2(True)
+                Part.ViewZoomtofit2()
+
             End If
 
             Part.ClearSelection2(True)
@@ -5818,34 +6101,31 @@ SideLAssem:
                 Part.ClearSelection2(True)
 
                 If BlkNosY >= 2 Then
-                    boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                    If BlkOne = 400 Then
-                        myFeature = Part.FeatureManager.FeatureLinearPattern2(2, 0.4, 0, 0, True, True, "NULL", "NULL", False)
-                    Else
-                        myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                        boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                        If BlkOne = 400 Then
+                            myFeature = Part.FeatureManager.FeatureLinearPattern2(2, 0.4, 0, 0, True, True, "NULL", "NULL", False)
+                        Else
+                            myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                        End If
+                        Part.ClearSelection2(True)
+                        Part.ViewZoomtofit2()
                     End If
-                    Part.ClearSelection2(True)
-                    Part.ViewZoomtofit2()
-                End If
 
                     GoTo SaveAssem
                 End If
 
-
-                '------------------------------------------ Aligned with Fans ------------------------------------------------
+            If SideClear <= 0 Then
                 'Right Side
                 boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-            boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-            myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-            Part.ClearSelection2(True)
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
 
-            boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-            boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-            myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-            Part.ClearSelection2(True)
-
-            If FanNoY >= 1 And BlkNosY >= 1 Then
+                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Right Plane", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, ((PnlWth * (FanNoX - 1)) / 2) + 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
 
                 boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                 boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
@@ -5854,12 +6134,61 @@ SideLAssem:
 
                 boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
                 boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY + BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
                 Part.ClearSelection2(True)
                 Part.ViewZoomtofit2()
 
-            ElseIf FanNoY >= 1 And BlkNosY = 0 Then
-                If (FanNoY - 1) > 0 Then
+                'Left Side
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Right Plane", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, ((PnlWth * (FanNoX - 1)) / 2) + 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY + BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                Part.ClearSelection2(True)
+                Part.ViewZoomtofit2()
+
+
+                boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, False, 0, Nothing, 0)
+                    Part.EditDelete()
+                    boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, False, 0, Nothing, 0)
+                    Part.EditDelete()
+
+                GoTo SaveAssem
+
+                End If
+
+                '------------------------------------------ Aligned with Fans ------------------------------------------------
+                'Right Side
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Part.ClearSelection2(True)
+
+                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                If SideClear > PnlWth Then
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Else
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                End If
+
+                Part.ClearSelection2(True)
+
+                If FanNoY >= 1 And BlkNosY >= 1 Then
+
                     boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                     boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
                     myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
@@ -5867,42 +6196,46 @@ SideLAssem:
 
                     boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
                     boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                    myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
-                    Part.ClearSelection2(True)
-                    Part.ViewZoomtofit2()
-
-                    GoTo SaveAssem
-                End If
-            End If
-
-
-            'Left Side
-            If BlkNosY = 1 Then
-                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                Part.ClearSelection2(True)
-
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                Part.ClearSelection2(True)
-
-                If FanNoY >= 1 And BlkNosY >= 1 Then
-
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                    Part.ClearSelection2(True)
-
-                    boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
                     myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
                     Part.ClearSelection2(True)
                     Part.ViewZoomtofit2()
 
                 ElseIf FanNoY >= 1 And BlkNosY = 0 Then
                     If (FanNoY - 1) > 0 Then
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                        Part.ClearSelection2(True)
+
+                        boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-1@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                        myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                        Part.ClearSelection2(True)
+                        Part.ViewZoomtofit2()
+
+                        GoTo SaveAssem
+                    End If
+                End If
+
+
+                'Left Side
+                If BlkNosY = 1 Then
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                    Part.ClearSelection2(True)
+
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    If SideClear > PnlWth Then
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                    Else
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                    End If
+                    Part.ClearSelection2(True)
+
+                    If FanNoY >= 1 And BlkNosY >= 1 Then
+
                         boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                         boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
                         myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
@@ -5910,41 +6243,41 @@ SideLAssem:
 
                         boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
                         boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                        myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                        myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
                         Part.ClearSelection2(True)
                         Part.ViewZoomtofit2()
 
-                        GoTo SaveAssem
+                    ElseIf FanNoY >= 1 And BlkNosY = 0 Then
+                        If (FanNoY - 1) > 0 Then
+                            boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                            boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                            myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                            Part.ClearSelection2(True)
+
+                            boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                            boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                            myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                            Part.ClearSelection2(True)
+                            Part.ViewZoomtofit2()
+
+                            GoTo SaveAssem
+                        End If
+
                     End If
 
-                End If
-
-            Else
-                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                Part.ClearSelection2(True)
-
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                Part.ClearSelection2(True)
-
-                If FanNoY >= 1 And BlkNosY >= 1 Then
-
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                Else
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                     Part.ClearSelection2(True)
 
-                    boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                    myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_07_Side Blank_A1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                     Part.ClearSelection2(True)
-                    Part.ViewZoomtofit2()
 
-                ElseIf FanNoY >= 1 And BlkNosY = 0 Then
-                    If (FanNoY - 1) > 0 Then
+                    If FanNoY >= 1 And BlkNosY >= 1 Then
+
                         boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
                         boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
                         myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
@@ -5952,111 +6285,126 @@ SideLAssem:
 
                         boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
                         boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                        myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                        myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
                         Part.ClearSelection2(True)
                         Part.ViewZoomtofit2()
 
-                        GoTo SaveAssem
+                    ElseIf FanNoY >= 1 And BlkNosY = 0 Then
+                        If (FanNoY - 1) > 0 Then
+                            boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                            boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                            myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, PnlHt - 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                            Part.ClearSelection2(True)
+
+                            boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                            boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-3@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                            myFeature = Part.FeatureManager.FeatureLinearPattern2(FanNoY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                            Part.ClearSelection2(True)
+                            Part.ViewZoomtofit2()
+
+                            GoTo SaveAssem
+                        End If
+
                     End If
 
                 End If
 
-            End If
 
-
-            '-------------------------------------------- Aligned with Top Blanks -----------------------------------------------------
-            'Right Side
-            If BlkNosY > 1 Then
-                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                Part.ClearSelection2(True)
-
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                Part.ClearSelection2(True)
-
-
-                If BlkOne = 400 Then
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, (PnlHt * FanNoY) - 0.025 + 0.4, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                '-------------------------------------------- Aligned with Top Blanks -----------------------------------------------------
+                'Right Side
+                If BlkNosY > 1 Then
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                     Part.ClearSelection2(True)
 
-                    GoTo LeftSideHorC
-                Else
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, (PnlHt * FanNoY) - 0.025 + PnlHt, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_1-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                     Part.ClearSelection2(True)
 
-                    'boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
-                    'boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                    'myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
-                    'Part.ClearSelection2(True)
-                    'Part.ViewZoomtofit2()
+
+                    If BlkOne = 400 Then
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, (PnlHt * FanNoY) - 0.025 + 0.4, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                        Part.ClearSelection2(True)
+
+                        GoTo LeftSideHorC
+                    Else
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, (PnlHt * FanNoY) - 0.025 + PnlHt, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                        Part.ClearSelection2(True)
+
+                        'boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                        'boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                        'myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                        'Part.ClearSelection2(True)
+                        'Part.ViewZoomtofit2()
+
+                    End If
 
                 End If
 
-            End If
-
-            'Left Side
+                'Left Side
 LeftSideHorC:
-            If BlkNosY > 1 Then
-                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                Part.ClearSelection2(True)
-
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
-                Part.ClearSelection2(True)
-
-                If BlkOne = 400 Then
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, (PnlHt * FanNoY) - 0.025 + 0.4, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                If BlkNosY > 1 Then
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Front Plane@" & AHUName & "_Motor Sub Assembly_2-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, False, 0.002, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                     Part.ClearSelection2(True)
 
-                    GoTo SaveAssem
-                Else
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-                    boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, (PnlHt * FanNoY) - 0.025 + PnlHt, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                    boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_09_Corner Blank_1-2@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                    myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, 0.024, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
                     Part.ClearSelection2(True)
 
-                    'boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
-                    'boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-                    'myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
-                    'Part.ClearSelection2(True)
-                    'Part.ViewZoomtofit2()
+                    If BlkOne = 400 Then
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, (PnlHt * FanNoY) - 0.025 + 0.4, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                        Part.ClearSelection2(True)
+
+                        GoTo SaveAssem
+                    Else
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+                        boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+                        myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, False, (PnlHt * FanNoY) - 0.025 + PnlHt, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                        Part.ClearSelection2(True)
+
+                        'boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                        'boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                        'myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                        'Part.ClearSelection2(True)
+                        'Part.ViewZoomtofit2()
+                    End If
+
                 End If
 
+                boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                Part.ClearSelection2(True)
+                Part.ViewZoomtofit2()
+
+                boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
+                boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
+                myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
+                Part.ClearSelection2(True)
+                Part.ViewZoomtofit2()
+
+                '------------------WIP-------------------
+
+                If PushSide = True Then
+
+
+                End If
+
+                Part.EditRebuild3()
+
+
             End If
-
-            boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
-            boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-2@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-            myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
-            Part.ClearSelection2(True)
-            Part.ViewZoomtofit2()
-
-            boolstatus = Part.Extension.SelectByID2("Y-Axis", "AXIS", 0, 0, 0, False, 2, Nothing, 0)
-            boolstatus = Part.Extension.SelectByID2(AHUName & "_05A_Hor_C_Support_2-4@" & AHUName & "_AHU Final Assembly", "COMPONENT", 0, 0, 0, True, 1, Nothing, 0)
-            myFeature = Part.FeatureManager.FeatureLinearPattern2(BlkNosY - 1, PnlHt, 0, 0, True, True, "NULL", "NULL", False)
-            Part.ClearSelection2(True)
-            Part.ViewZoomtofit2()
-
-            '------------------WIP-------------------
-
-            If PushSide = True Then
-
-
-            End If
-
-            Part.EditRebuild3()
-        End If
 
         Part.EditRebuild3()
 
@@ -6258,8 +6606,13 @@ TWO_SIDE_Ls:
 #End Region
 
 #Region "Drawings"
+    Dim Exitsub As Boolean = False
+
     Public Sub CreateDrawings(PartName As String, DwgQty As Integer, HorCSize As Decimal)
-        'Exit Sub
+        If Exitsub = True Then
+            Exit Sub
+        End If
+
         swApp.ActivateDoc2(PartName, False, longstatus)
         Part = swApp.ActiveDoc
 
@@ -6474,7 +6827,10 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub BlankDrawings(PartName As String, BlkQty As Integer)
-        'Exit Sub
+        If Exitsub = True Then
+            Exit Sub
+        End If
+
         swApp.ActivateDoc2(PartName, False, longstatus)
         Part = swApp.ActiveDoc
 
@@ -6688,7 +7044,10 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub DoorDrawings(PartName As String, DoorWth As Decimal, DoorHt As Decimal)
-        'Exit Sub
+        If Exitsub = True Then
+            Exit Sub
+        End If
+
         swApp.ActivateDoc2(PartName, False, longstatus)
         Part = swApp.ActiveDoc
 
@@ -6889,8 +7248,11 @@ TWO_SIDE_Ls:
         swApp.CloseAllDocuments(True)
     End Sub
 
-    Public Sub MotorPlateDrawings(Partname As String, FanNos As Integer, FanDia As Integer, PanelWth As Decimal, PanelHT As Decimal)
-        'Exit Sub
+    Public Sub MotorPlateDrawings(Partname As String, FanNos As Integer, FanDia As Integer, PanelWth As Decimal, PanelHT As Decimal, MotorDia As Integer)
+        If Exitsub = True Then
+            Exit Sub
+        End If
+
         swApp.ActivateDoc2(Partname, False, longstatus)
         Part = swApp.ActiveDoc
 
@@ -6974,188 +7336,195 @@ TWO_SIDE_Ls:
         'Top - Section
         boolstatus = Draw.ActivateView("Drawing View2")
         'skSegment = Part.SketchManager.CreateLine((xDim * SScale / 2) + 0.15, 0, 0, -(xDim * SScale / 2) - 0.15, 0, 0)
-        skSegment = Part.SketchManager.CreateLine((xDim * SScale / 2) + 0.15, (PanelWth / 2 * 87) / 100, 0, -(xDim * SScale / 2) - 0.15, (PanelWth / 2 * 87) / 100, 0)
+        If MotorDia < 400 Then
+            skSegment = Part.SketchManager.CreateLine((xDim * SScale / 2) + 0.15, (PanelWth / 2 * 74) / 100, 0, -(xDim * SScale / 2) - 0.15, (PanelWth / 2 * 74) / 100, 0)
+        Else
+            skSegment = Part.SketchManager.CreateLine((xDim * SScale / 2) + 0.15, (PanelWth / 2 * 87) / 100, 0, -(xDim * SScale / 2) - 0.15, (PanelWth / 2 * 87) / 100, 0)
+        End If
         'skSegment = Part.SketchManager.CreateLine((xDim * SScale / 2) + 0.15, 0.345, 0, -(xDim * SScale / 2) - 0.15, 0.345, 0)
         boolstatus = Part.Extension.SelectByID2("Line1", "SKETCHSEGMENT", 0, 0, 0, False, 0, Nothing, 0)
-        excludedComponents = vbEmpty
-        myView = Draw.CreateSectionViewAt5(xFrontFlat, yTopSec, 0, "A", swCreateSectionViewAtOptions_e.swCreateSectionView_DisplaySurfaceCut, excludedComponents, 0)
-        boolstatus = Draw.ActivateView("Drawing View3")
-        Part.ClearSelection2(True)
+            excludedComponents = vbEmpty
+            myView = Draw.CreateSectionViewAt5(xFrontFlat, yTopSec, 0, "A", swCreateSectionViewAtOptions_e.swCreateSectionView_DisplaySurfaceCut, excludedComponents, 0)
+            boolstatus = Draw.ActivateView("Drawing View3")
+            Part.ClearSelection2(True)
 
-        boolstatus = Part.Extension.SelectByID2("Drawing View3", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
-        DrawView = Part.SelectionManager.GetSelectedObject5(1)
-        boolstatus = Part.Extension.SelectByID2("Drawing View1", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
-        BaseView = Part.SelectionManager.GetSelectedObject5(1)
-        boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewVerticalCenter, BaseView)
-        Part.ClearSelection2(True)
-        boolstatus = Part.ActivateSheet("Sheet1")
+            boolstatus = Part.Extension.SelectByID2("Drawing View3", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+            DrawView = Part.SelectionManager.GetSelectedObject5(1)
+            boolstatus = Part.Extension.SelectByID2("Drawing View1", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+            BaseView = Part.SelectionManager.GetSelectedObject5(1)
+            boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewVerticalCenter, BaseView)
+            Part.ClearSelection2(True)
+            boolstatus = Part.ActivateSheet("Sheet1")
 
-        'Right - Section
-        boolstatus = Draw.ActivateView("Drawing View2")
-        skSegment = Part.SketchManager.CreateLine((PanelHT / 2 * 87) / 100, (yDim * SScale / 2) + 0.15, 0, (PanelHT / 2 * 87) / 100, -(yDim * SScale / 2) - 0.15, 0)
-        boolstatus = Part.Extension.SelectByID2("Line2", "SKETCHSEGMENT", 0, 0, 0, False, 0, Nothing, 0)
-        excludedComponents = vbEmpty
-        myView = Draw.CreateSectionViewAt5(xRightSec, yFrontFlat, 0, "B", swCreateSectionViewAtOptions_e.swCreateSectionView_DisplaySurfaceCut, excludedComponents, 0)
-        boolstatus = Draw.ActivateView("Drawing View4")
-        Part.ClearSelection2(True)
+            'Right - Section
+            boolstatus = Draw.ActivateView("Drawing View2")
+            skSegment = Part.SketchManager.CreateLine((PanelHT / 2 * 87) / 100, (yDim * SScale / 2) + 0.15, 0, (PanelHT / 2 * 87) / 100, -(yDim * SScale / 2) - 0.15, 0)
+            boolstatus = Part.Extension.SelectByID2("Line2", "SKETCHSEGMENT", 0, 0, 0, False, 0, Nothing, 0)
+            excludedComponents = vbEmpty
+            myView = Draw.CreateSectionViewAt5(xRightSec, yFrontFlat, 0, "B", swCreateSectionViewAtOptions_e.swCreateSectionView_DisplaySurfaceCut, excludedComponents, 0)
+            boolstatus = Draw.ActivateView("Drawing View4")
+            Part.ClearSelection2(True)
 
-        'Isometric
-        myView = Part.CreateDrawViewFromModelView3(Partname, "*Dimetric", xIso, yFrontFlat, 0)
-        boolstatus = Draw.ActivateView("Drawing View2")
-        Part.ClearSelection2(True)
+            'Isometric
+            myView = Part.CreateDrawViewFromModelView3(Partname, "*Dimetric", xIso, yFrontFlat, 0)
+            boolstatus = Draw.ActivateView("Drawing View2")
+            Part.ClearSelection2(True)
 
-        boolstatus = Part.Extension.SelectByID2("Drawing View5", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
-        DrawView = Part.SelectionManager.GetSelectedObject6(1, -1)
-        boolstatus = DrawView.SetDisplayMode4(False, swDisplayMode_e.swSHADED, True, True, False)
-        Part.ClearSelection2(True)
+            boolstatus = Part.Extension.SelectByID2("Drawing View5", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+            DrawView = Part.SelectionManager.GetSelectedObject6(1, -1)
+            boolstatus = DrawView.SetDisplayMode4(False, swDisplayMode_e.swSHADED, True, True, False)
+            Part.ClearSelection2(True)
 
-        'Dimensions--------------------------------------------------------------------------------------------------------------
-        boolstatus = Draw.ActivateSheet("Sheet1")
+            'Dimensions--------------------------------------------------------------------------------------------------------------
+            boolstatus = Draw.ActivateSheet("Sheet1")
 
-        Select Case FanDia
-            Case = "310"
-                boolstatus = Part.ActivateView("Drawing View1")
-                boolstatus = Part.Extension.SelectByRay(0.0793769120675188, 0.136042810878273, -4999.999, 0, 0, -1, 0.000470660536879686, 1, False, 0, 0)
-                myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
-                Part.ClearSelection2(True)
+            Select Case FanDia
+                Case = "310"
+                    boolstatus = Part.ActivateView("Drawing View1")
+                    boolstatus = Part.Extension.SelectByRay(0.0793769120675188, 0.136042810878273, -4999.999, 0, 0, -1, 0.000470660536879686, 1, False, 0, 0)
+                    myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
+                    Part.ClearSelection2(True)
 
-            Case = "350"
-                boolstatus = Part.ActivateView("Drawing View1")
-                boolstatus = Part.Extension.SelectByRay(0.0801934912410846, 0.137107886344444, -4999.999, 0, 0, -1, 0.000436206866635698, 1, False, 0, 0)
-                myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
-                Part.ClearSelection2(True)
+                Case = "350"
+                    boolstatus = Part.ActivateView("Drawing View1")
+                    boolstatus = Part.Extension.SelectByRay(0.0801934912410846, 0.137107886344444, -4999.999, 0, 0, -1, 0.000436206866635698, 1, False, 0, 0)
+                    myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
+                    Part.ClearSelection2(True)
 
-            Case = "400"
-                boolstatus = Part.ActivateView("Drawing View1")
-                boolstatus = Part.Extension.SelectByRay(0.086323111375232, 0.137397749515128, -4999.999, 0, 0, -1, 0.000682971434621279, 1, False, 0, 0)
-                myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
-                Part.ClearSelection2(True)
+                Case = "400"
+                    boolstatus = Part.ActivateView("Drawing View1")
+                    boolstatus = Part.Extension.SelectByRay(0.086323111375232, 0.137397749515128, -4999.999, 0, 0, -1, 0.000682971434621279, 1, False, 0, 0)
+                    myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
+                    Part.ClearSelection2(True)
 
-            Case = "450"
-                boolstatus = Part.ActivateView("Drawing View1")
-                boolstatus = Part.Extension.SelectByRay(0.0823312252964427, 0.141546640281291, -4999.999, 0, 0, -1, 0.000959525691699605, 1, False, 0, 0)
-                myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
-                Part.ClearSelection2(True)
+                Case = "450"
+                    boolstatus = Part.ActivateView("Drawing View1")
+                    boolstatus = Part.Extension.SelectByRay(0.0823312252964427, 0.141546640281291, -4999.999, 0, 0, -1, 0.000959525691699605, 1, False, 0, 0)
+                    myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
+                    Part.ClearSelection2(True)
 
-            Case = "500"
-                boolstatus = Part.ActivateView("Drawing View1")
-                boolstatus = Part.Extension.SelectByRay(0.0822106270040131, 0.143174781508755, -4999.999, 0, 0, -1, 0.000682971434621279, 1, False, 0, 0)
-                myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
-                Part.ClearSelection2(True)
+                Case = "500"
+                    boolstatus = Part.ActivateView("Drawing View1")
+                    boolstatus = Part.Extension.SelectByRay(0.0822106270040131, 0.143174781508755, -4999.999, 0, 0, -1, 0.000682971434621279, 1, False, 0, 0)
+                    myDisplayDim = Part.AddDimension2(0.124851701433891, 0.179078974161163, 0)
+                    Part.ClearSelection2(True)
 
-            Case = "560"
-                boolstatus = Part.ActivateView("Drawing View1")
-                boolstatus = Part.Extension.SelectByRay(0.0852274384087651, 0.144804898553848, -5000, 0, 0, -1, 0.001, 1, False, 0, 0)
-                myDisplayDim = Part.AddDimension2(0.124701013579276, 0.178928286306549, 0)
-                Part.ClearSelection2(True)
+                Case = "560"
+                    boolstatus = Part.ActivateView("Drawing View1")
+                    boolstatus = Part.Extension.SelectByRay(0.0852274384087651, 0.144804898553848, -5000, 0, 0, -1, 0.001, 1, False, 0, 0)
+                    myDisplayDim = Part.AddDimension2(0.124701013579276, 0.178928286306549, 0)
+                    Part.ClearSelection2(True)
 
-        End Select
-
-
-        'Height - Flat  
-        boolstatus = Draw.ActivateView("Drawing View1")
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat + (yDimFlat / 2), -4500, 0, 0, -1, 0.001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat - (yDimFlat / 2), -4500, 0, 0, -1, 0.001 / SScale, 1, True, 0, 0)
-        myDisplayDim = Part.AddVerticalDimension2(xFrontFlat - (xDimFlat / 2) - 0.015, yFrontFlat, 0)
-        Part.ClearSelection2(True)
-
-        'Width - Flat
-        boolstatus = Part.ActivateView("Drawing View1")
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat + (xDimFlat / 2), yFrontFlat, -5500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat - (xDimFlat / 2), yFrontFlat, -5500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xFrontFlat, yFrontFlat + (yDimFlat / 2) + 0.015, 0)
-        Part.ClearSelection2(True)
-
-        'Height - Top Section
-        boolstatus = Part.ActivateView("Section View A-A")
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat + (xDim / 2), yTopSec + (zDim / 2), -5000, 0, 0, -1, 0.001, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat + (xDim / 2) - (zDim * 20), yTopSec - (zDim / 2), -5000, 0, 0, -1, 0.001, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xFrontFlat + (xDim / 2) + 0.015, yTopSec - (zDim / 2) + 0.015, 0)
-        Part.ClearSelection2(True)
-
-        'Width - Top Section
-        boolstatus = Part.ActivateView("Section View A-A")
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat - (xDim / 2), yTopSec, -5000, 0, 0, -1, 0.0001, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xFrontFlat + (xDim / 2), yTopSec, -5000, 0, 0, -1, 0.0001, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xFrontFlat, yTopSec + (zDim / 2) + 0.015, 0)
-        Part.ClearSelection2(True)
-
-        'Height - Right Section
-        boolstatus = Part.ActivateView("Section View B-B")
-        boolstatus = Part.Extension.SelectByRay(xRightSec, yFrontFlat + (yDim / 2), -5000, 0, 0, -1, 0.0001, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xRightSec, yFrontFlat - (yDim / 2), -5000, 0, 0, -1, 0.0001, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xRightSec + (zDim / 2) + 0.01, yFrontFlat, 0)
-        Part.ClearSelection2(True)
-
-        'Width - Right Section
-        boolstatus = Part.ActivateView("Section View B-B")
-        boolstatus = Part.Extension.SelectByRay(xRightSec - (zDim * 5), yFrontFlat + (yDim / 2) - (zDim * 10), -5000, 0, 0, -1, 0.001, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xRightSec + (zDim * 5), yFrontFlat + (yDim / 2) - zDim, -5000, 0, 0, -1, 0.001, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xRightSec - (zDim / 2) - 0.015, yFrontFlat + (yDim / 2) + 0.015, 0)
-        Part.ClearSelection2(True)
+            End Select
 
 
+            'Height - Flat  
+            boolstatus = Draw.ActivateView("Drawing View1")
+            boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat + (yDimFlat / 2), -4500, 0, 0, -1, 0.001 / SScale, 1, False, 0, 0)
+            boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat - (yDimFlat / 2), -4500, 0, 0, -1, 0.001 / SScale, 1, True, 0, 0)
+            myDisplayDim = Part.AddVerticalDimension2(xFrontFlat - (xDimFlat / 2) - 0.015, yFrontFlat, 0)
+            Part.ClearSelection2(True)
 
-        Dim vAnnotations As Object
-        boolstatus = Part.ActivateView("Drawing View3")
-        boolstatus = Part.Extension.SelectByID2("Drawing View3", "DRAWINGVIEW", xFrontFlat, yTopSec, 0, True, 0, Nothing, 0)
-        vAnnotations = Draw.InsertModelAnnotations3(0, 32776, False, False, False, True)
-        Part.ClearSelection2(True)
-        boolstatus = Part.ActivateView("Drawing View4")
-        boolstatus = Part.Extension.SelectByID2("Drawing View4", "DRAWINGVIEW", xRightSec, yFrontFlat, 0, True, 0, Nothing, 0)
-        vAnnotations = Draw.InsertModelAnnotations3(0, 32776, False, False, False, True)
-        Part.ClearSelection2(True)
+            'Width - Flat
+            boolstatus = Part.ActivateView("Drawing View1")
+            boolstatus = Part.Extension.SelectByRay(xFrontFlat + (xDimFlat / 2), yFrontFlat, -5500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+            boolstatus = Part.Extension.SelectByRay(xFrontFlat - (xDimFlat / 2), yFrontFlat, -5500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+            myDisplayDim = Part.AddDimension2(xFrontFlat, yFrontFlat + (yDimFlat / 2) + 0.015, 0)
+            Part.ClearSelection2(True)
+
+            'Height - Top Section
+            boolstatus = Part.ActivateView("Section View A-A")
+            boolstatus = Part.Extension.SelectByRay(xFrontFlat + (xDim / 2), yTopSec + (zDim / 2), -5000, 0, 0, -1, 0.001, 1, False, 0, 0)
+            boolstatus = Part.Extension.SelectByRay(xFrontFlat + (xDim / 2) - (zDim * 20), yTopSec - (zDim / 2), -5000, 0, 0, -1, 0.001, 1, True, 0, 0)
+            myDisplayDim = Part.AddDimension2(xFrontFlat + (xDim / 2) + 0.015, yTopSec - (zDim / 2) + 0.015, 0)
+            Part.ClearSelection2(True)
+
+            'Width - Top Section
+            boolstatus = Part.ActivateView("Section View A-A")
+            boolstatus = Part.Extension.SelectByRay(xFrontFlat - (xDim / 2), yTopSec, -5000, 0, 0, -1, 0.0001, 1, False, 0, 0)
+            boolstatus = Part.Extension.SelectByRay(xFrontFlat + (xDim / 2), yTopSec, -5000, 0, 0, -1, 0.0001, 1, True, 0, 0)
+            myDisplayDim = Part.AddDimension2(xFrontFlat, yTopSec + (zDim / 2) + 0.015, 0)
+            Part.ClearSelection2(True)
+
+            'Height - Right Section
+            boolstatus = Part.ActivateView("Section View B-B")
+            boolstatus = Part.Extension.SelectByRay(xRightSec, yFrontFlat + (yDim / 2), -5000, 0, 0, -1, 0.0001, 1, False, 0, 0)
+            boolstatus = Part.Extension.SelectByRay(xRightSec, yFrontFlat - (yDim / 2), -5000, 0, 0, -1, 0.0001, 1, True, 0, 0)
+            myDisplayDim = Part.AddDimension2(xRightSec + (zDim / 2) + 0.01, yFrontFlat, 0)
+            Part.ClearSelection2(True)
+
+            'Width - Right Section
+            boolstatus = Part.ActivateView("Section View B-B")
+            boolstatus = Part.Extension.SelectByRay(xRightSec - (zDim * 5), yFrontFlat + (yDim / 2) - (zDim * 10), -5000, 0, 0, -1, 0.001, 1, False, 0, 0)
+            boolstatus = Part.Extension.SelectByRay(xRightSec + (zDim * 5), yFrontFlat + (yDim / 2) - zDim, -5000, 0, 0, -1, 0.001, 1, True, 0, 0)
+            myDisplayDim = Part.AddDimension2(xRightSec - (zDim / 2) - 0.015, yFrontFlat + (yDim / 2) + 0.015, 0)
+            Part.ClearSelection2(True)
 
 
-        ' Remove "SECTION" Note
-        For i = 1 To 80
+
+            Dim vAnnotations As Object
             boolstatus = Part.ActivateView("Drawing View3")
-            boolstatus = Part.Extension.SelectByID2("DetailItem" & i & "@Drawing View3", "NOTE", 0, 0, 0, False, 0, Nothing, 0)
-            Part.EditDelete()
-            boolstatus = Part.Extension.SelectByID2("RD" & i & "@Drawing View3", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
-            Part.EditDelete()
-        Next i
-
-        For j = 1 To 80
+            boolstatus = Part.Extension.SelectByID2("Drawing View3", "DRAWINGVIEW", xFrontFlat, yTopSec, 0, True, 0, Nothing, 0)
+            vAnnotations = Draw.InsertModelAnnotations3(0, 32776, False, False, False, True)
+            Part.ClearSelection2(True)
             boolstatus = Part.ActivateView("Drawing View4")
-            boolstatus = Part.Extension.SelectByID2("DetailItem" & j & "@Drawing View4", "NOTE", 0, 0, 0, False, 0, Nothing, 0)
-            Part.EditDelete()
-            boolstatus = Part.Extension.SelectByID2("D4@EdgeBend" & j & "@Draw1-SectionAssembly-2-1@Drawing View4", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
-            Part.EditDelete()
-            boolstatus = Part.Extension.SelectByID2("RD" & j & "@Drawing View4", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
-            Part.EditDelete()
-        Next
+            boolstatus = Part.Extension.SelectByID2("Drawing View4", "DRAWINGVIEW", xRightSec, yFrontFlat, 0, True, 0, Nothing, 0)
+            vAnnotations = Draw.InsertModelAnnotations3(0, 32776, False, False, False, True)
+            Part.ClearSelection2(True)
 
 
-        ' Note
-        Dim X, Y, Z As Decimal
-        boolstatus = Part.Extension.SetUserPreferenceInteger(swUserPreferenceIntegerValue_e.swDetailingBalloonStyle, 0, swBalloonStyle_e.swBS_None)
+            ' Remove "SECTION" Note
+            For i = 1 To 80
+                boolstatus = Part.ActivateView("Drawing View3")
+                boolstatus = Part.Extension.SelectByID2("DetailItem" & i & "@Drawing View3", "NOTE", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditDelete()
+                boolstatus = Part.Extension.SelectByID2("RD" & i & "@Drawing View3", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditDelete()
+            Next i
 
-        X = Round(xDimFlat * SScale * 1000, 2)
-        Y = Round(yDimFlat * SScale * 1000, 2)
-        Z = Round(zDimFlat * SScale * 1000, 2)
-        myNote = Draw.CreateText2(Partname & vbNewLine & "Qty - " & FanNos & vbNewLine & X & "mm x " & Y & "mm x " & Z & "mm", xRightSec, yTopSec, 0, 0.004, 0)
+            For j = 1 To 80
+                boolstatus = Part.ActivateView("Drawing View4")
+                boolstatus = Part.Extension.SelectByID2("DetailItem" & j & "@Drawing View4", "NOTE", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditDelete()
+                boolstatus = Part.Extension.SelectByID2("D4@EdgeBend" & j & "@Draw1-SectionAssembly-2-1@Drawing View4", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditDelete()
+                boolstatus = Part.Extension.SelectByID2("RD" & j & "@Drawing View4", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+                Part.EditDelete()
+            Next
 
-        boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
 
-        XValueList.Add(X)
-        YValueList.Add(Y)
-        ZValueList.Add(Z)
+            ' Note
+            Dim X, Y, Z As Decimal
+            boolstatus = Part.Extension.SetUserPreferenceInteger(swUserPreferenceIntegerValue_e.swDetailingBalloonStyle, 0, swBalloonStyle_e.swBS_None)
 
-        ' Save As
-        Part.ViewZoomtofit2()
-        longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & Partname & ".SLDDRW", 0, 2)
-        swApp.CloseAllDocuments(True)
+            X = Round(xDimFlat * SScale * 1000, 2)
+            Y = Round(yDimFlat * SScale * 1000, 2)
+            Z = Round(zDimFlat * SScale * 1000, 2)
+            myNote = Draw.CreateText2(Partname & vbNewLine & "Qty - " & FanNos & vbNewLine & X & "mm x " & Y & "mm x " & Z & "mm", xRightSec, yTopSec, 0, 0.004, 0)
 
-        Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & Partname & ".SLDDRW", 3, 0, "", longstatus, longwarnings)
-        boolstatus = Part.EditRebuild3()
-        longstatus = Part.SaveAs3(SaveFolder & "\PDF Drawings\" & Partname & ".PDF", 0, 2)
-        swApp.CloseAllDocuments(True)
+            boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
+
+            XValueList.Add(X)
+            YValueList.Add(Y)
+            ZValueList.Add(Z)
+
+            ' Save As
+            Part.ViewZoomtofit2()
+            longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & Partname & ".SLDDRW", 0, 2)
+            swApp.CloseAllDocuments(True)
+
+            Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & Partname & ".SLDDRW", 3, 0, "", longstatus, longwarnings)
+            boolstatus = Part.EditRebuild3()
+            longstatus = Part.SaveAs3(SaveFolder & "\PDF Drawings\" & Partname & ".PDF", 0, 2)
+            swApp.CloseAllDocuments(True)
 
     End Sub
 
-    Public Sub VerCDrawings(XFans As Integer)
-        ' Exit Sub
+    Public Sub VerCDrawings(XFans As Integer, VerCQty As Integer, SideClear As Decimal)
+        If Exitsub = True Then
+            Exit Sub
+        End If
+
         swApp.ActivateDoc2(AHUName & "_04A_Vertical Channel", False, longstatus)
         Part = swApp.ActiveDoc
 
@@ -7333,43 +7702,47 @@ TWO_SIDE_Ls:
 
         'Width - B-B 
         boolstatus = Part.ActivateView("Drawing View4")
-        boolstatus = Part.Extension.SelectByRay(xRightSec + (0.05 / SScale), NewMidPt + ((WallHt - 4) / (2000 * SScale)), -5500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay(xRightSec + (0.05 / SScale), NewMidPt + ((WallHt - 6) / (2000 * SScale)), -5500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
         boolstatus = Part.Extension.SelectByRay(xRightSec - (0.05 / SScale), NewMidPt, -5500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
-        myDisplayDim = Part.AddDimension2(xRightSec, yFrontFlat + 0.057, 0)
+        myDisplayDim = Part.AddDimension2(xRightSec, NewMidPt + 0.06, 0)
         Part.ClearSelection2(True)
 
         'Height - B-B
         boolstatus = Part.ActivateView("Drawing View4")
         boolstatus = Part.Extension.SelectByRay(xRightSec, -(((WallHt - 4) / (SScale * 2000)) - NewMidPt), -5500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        boolstatus = Part.Extension.SelectByRay(xRightSec, ((WallHt - 4) / (SScale * 2000) + NewMidPt), -5500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        boolstatus = Part.Extension.SelectByRay(xRightSec, ((WallHt - 4) / (SScale * 2000) + NewMidPt), -5500, 0, 0, -1, 0.00005 / SScale, 1, True, 0, 0)
         myDisplayDim = Part.AddDimension2(xRightSec - 0.01, NewMidPt, 0)
         Part.ClearSelection2(True)
 
-
-
         ' Note
         boolstatus = Part.Extension.SetUserPreferenceInteger(swUserPreferenceIntegerValue_e.swDetailingBalloonStyle, 0, swBalloonStyle_e.swBS_None)
-        myNote = Draw.CreateText2(AHUName & "_04A_Vertical Channel" & vbNewLine & "Qty - " & XFans + 1 & vbNewLine & Y & "mm x " & X & "mm x " & "2.00mm", xRightSec, yTopSec, 0, 0.004, 0)
+        If SideClear <= 0 Then
+            myNote = Draw.CreateText2(AHUName & "_04A_Vertical Channel" & vbNewLine & "Qty - " & XFans - 1 & vbNewLine & Y & "mm x " & X & "mm x " & "2.00mm", xRightSec, yTopSec, 0, 0.004, 0)
+        Else
+            myNote = Draw.CreateText2(AHUName & "_04A_Vertical Channel" & vbNewLine & "Qty - " & XFans + 1 + VerCQty & vbNewLine & Y & "mm x " & X & "mm x " & "2.00mm", xRightSec, yTopSec, 0, 0.004, 0)
+        End If
         boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
 
-        XValueList.Add(X)
-        YValueList.Add(Y)
-        ZValueList.Add(Z)
+            XValueList.Add(X)
+            YValueList.Add(Y)
+            ZValueList.Add(Z)
 
-        ' Save As
-        Part.ViewZoomtofit2()
-        longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_04A_Vertical Channel.SLDDRW", 0, 2)
-        swApp.CloseAllDocuments(True)
+            ' Save As
+            Part.ViewZoomtofit2()
+            longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_04A_Vertical Channel.SLDDRW", 0, 2)
+            swApp.CloseAllDocuments(True)
 
-        Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_04A_Vertical Channel.SLDDRW", 3, 0, "", longstatus, longwarnings)
-        boolstatus = Part.EditRebuild3()
-        longstatus = Part.SaveAs3(SaveFolder & "\PDF Drawings\" & AHUName & "_04A_Vertical Channel.PDF", 0, 2)
-        swApp.CloseAllDocuments(True)
+            Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_04A_Vertical Channel.SLDDRW", 3, 0, "", longstatus, longwarnings)
+            boolstatus = Part.EditRebuild3()
+            longstatus = Part.SaveAs3(SaveFolder & "\PDF Drawings\" & AHUName & "_04A_Vertical Channel.PDF", 0, 2)
+            swApp.CloseAllDocuments(True)
 
     End Sub
 
     Public Sub SideLDrawings()
-        'Exit Sub
+        If Exitsub = True Then
+            Exit Sub
+        End If
 
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_03A_Side_L_Left.SLDPRT", 1, 32, "", longstatus, longwarnings)
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_03A_Side_L_Right.SLDPRT", 1, 32, "", longstatus, longwarnings)
@@ -7676,7 +8049,9 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub TopBotLDrawings()
-        ' Exit Sub
+        If Exitsub = True Then
+            Exit Sub
+        End If
 
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02A_Bot_L.SLDPRT", 1, 0, "", longstatus, longwarnings)
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02A_Top_L.SLDPRT", 1, 0, "", longstatus, longwarnings)
@@ -8073,8 +8448,372 @@ TWO_SIDE_Ls:
         swApp.CloseAllDocuments(True)
     End Sub
 
+    Public Sub TopBot2ALDrawings(BTLth As Decimal)
+        If Exitsub = True Then
+            Exit Sub
+        End If
+
+        Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02A_Bot_L.SLDPRT", 1, 0, "", longstatus, longwarnings)
+        Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02A_Top_L.SLDPRT", 1, 0, "", longstatus, longwarnings)
+
+        swApp.ActivateDoc2(AHUName & "_02B_Bot_L2", False, longstatus)
+        Part = swApp.ActiveDoc
+
+        If Part Is Nothing Then
+            MsgBox("Please open an appropriate Part Document")
+            Exit Sub
+        End If
+
+        'Bounding Box
+        Dim BBox As Object = StdFunc.BoundingBox()
+        Dim xDim As Decimal = Abs(BBox(0)) + Abs(BBox(3))
+        Dim yDim As Decimal = Abs(BBox(1)) + Abs(BBox(4))
+        Dim zDim As Decimal = Abs(BBox(2)) + Abs(BBox(5))
+
+        'Bounding Box - Flat
+        boolstatus = Part.Extension.SelectByID2("Flat-Pattern16", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditUnsuppress2()
+
+        Dim BBoxFlat As Object = StdFunc.BoundingBox()
+        Dim xDimFlat As Decimal = Abs(BBoxFlat(0)) + Abs(BBoxFlat(3))
+        Dim yDimFlat As Decimal = Abs(BBoxFlat(1)) + Abs(BBoxFlat(4))
+        Dim zDimFlat As Decimal = Abs(BBoxFlat(2)) + Abs(BBoxFlat(5))
+
+        boolstatus = Part.Extension.SelectByID2("Flat-Pattern16", "BODYFEATURE", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSuppress2()
+
+        'swApp.CloseAllDocuments(True)
+
+        ' Sheet Scale
+        Dim SScaleX As Integer = Ceiling((xDimFlat + zDim + xDim) / (0.297 - (0.03 + 0.03 + 0.03)))                 '(0.297 - (0.03 + 0.04 + 0.04 + 0.03)))
+        Dim SScaleY As Integer = Ceiling((zDim + yDimFlat) / (0.21 - (0.03 + 0.02 + 0.03)))                         ' (0.21 - (0.03 + 0.04 + 0.03)))
+        Dim SScale As Integer = SScaleX
+        If SScaleX < SScaleY Then
+            SScale = SScaleY
+        End If
+
+        ' Adjust Values for Scale
+        xDim /= SScale
+        yDim /= SScale
+        zDim /= SScale
+
+        xDimFlat /= SScale
+        yDimFlat /= SScale
+        zDimFlat /= SScale
+
+        ' Get Margins
+        Dim ClearX As Decimal = (0.297 - (xDimFlat + 0.03 + zDim + 0.03 + xDim)) / 2
+        If ClearX < 0.03 Then ClearX = 0.03
+        Dim ClearY As Decimal = (0.21 - (yDimFlat + 0.04 + zDim)) / 2
+        If ClearY < 0.03 Then ClearY = 0.03
+
+
+        ' Calculate View Placements
+        Dim xFrontFlat As Decimal = ClearX + xDimFlat / 2
+        Dim yTopSec As Decimal = ClearY + zDim / 2
+        Dim yFrontFlat As Decimal = yTopSec + ClearY + 0.01     '---Up
+        Dim xRightSec As Decimal = xFrontFlat + xDimFlat + 0.05
+        Dim xIso As Decimal = ClearY + 0.05
+
+        ' New Drawing
+        Part = swApp.NewDocument(DrawSheet, 2, 0.297, 0.21)
+        Draw = Part
+
+        swSheet = Draw.GetCurrentSheet()
+        swSheet.SetProperties2(12, 12, 1, SScale, False, 0.297, 0.21, True)
+        swSheet.SetTemplateName(DrawTemp)
+        swSheet.ReloadTemplate(True)
+        swApp.ActivateDoc2("Draw1 - Sheet1", False, longstatus)
+        Part = swApp.ActiveDoc
+
+        ' Views
+        boolstatus = Draw.CreateFlatPatternViewFromModelView(AHUName & "_02A_Bot_L", "Default", xFrontFlat, yFrontFlat, 0)
+        boolstatus = Part.Extension.SelectByID2("Drawing View1", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        boolstatus = Draw.ActivateView("Drawing View1")
+        Part.ClearSelection2(True)
+
+        'Front - Outside
+        myView = Part.CreateDrawViewFromModelView3(AHUName & "_02A_Bot_L", "*Front", -xFrontFlat, yFrontFlat, 0)
+        boolstatus = Draw.ActivateView("Drawing View2")
+        Part.ClearSelection2(True)
+
+
+        'Top - Section
+        boolstatus = Draw.ActivateView("Drawing View2")
+        skSegment = Part.SketchManager.CreateLine((xDim * SScale / 2) + 0.15, 0.015, 0, -(xDim * SScale / 2) - 0.15, 0.015, 0)
+        boolstatus = Part.Extension.SelectByID2("Line1", "SKETCHSEGMENT", 0, 0, 0, False, 0, Nothing, 0)
+        excludedComponents = vbEmpty
+        myView = Draw.CreateSectionViewAt5(xFrontFlat + 0.04, xIso + 0.01, 0, "A", swCreateSectionViewAtOptions_e.swCreateSectionView_DisplaySurfaceCut, excludedComponents, 0)
+        boolstatus = Draw.ActivateView("Drawing View3")
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.Extension.SelectByID2("Drawing View3", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = Part.Extension.SelectByID2("Drawing View1", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        BaseView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewVerticalCenter, BaseView)
+        Part.ClearSelection2(True)
+        boolstatus = Part.ActivateSheet("Sheet1")
+
+        'Right - Section
+        boolstatus = Draw.ActivateView("Drawing View2")
+        skSegment = Part.SketchManager.CreateLine(0, (yDim * SScale / 2) + 0.15, 0, 0, -(yDim * SScale / 2) - 0.15, 0)
+        boolstatus = Part.Extension.SelectByID2("Line2", "SKETCHSEGMENT", 0, 0, 0, False, 0, Nothing, 0)
+        excludedComponents = vbEmpty
+        myView = Draw.CreateSectionViewAt5(xIso + 0.03, yFrontFlat, 0, "B", swCreateSectionViewAtOptions_e.swCreateSectionView_DisplaySurfaceCut, excludedComponents, 0)
+        boolstatus = Draw.ActivateView("Drawing View4")
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.Extension.SelectByID2("Drawing View4", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = Part.Extension.SelectByID2("Drawing View1", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        BaseView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewHorizontalCenter, BaseView)
+        Part.ClearSelection2(True)
+
+        'Isometric
+        myView = Part.CreateDrawViewFromModelView3(AHUName & "_02A_Bot_L", "*Dimetric", xRightSec, yFrontFlat, 0)
+        boolstatus = Draw.ActivateView("Drawing View5")
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.Extension.SelectByID2("Drawing View5", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject6(1, -1)
+        boolstatus = DrawView.SetDisplayMode4(False, swDisplayMode_e.swSHADED, True, True, False)
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.Extension.SelectByID2("Drawing View5", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = Part.Extension.SelectByID2("Drawing View1", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        BaseView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewHorizontalCenter, BaseView)
+        Part.ClearSelection2(True)
+
+        For a = 1 To 50
+            boolstatus = Part.ActivateView("Drawing View3")
+            boolstatus = Part.Extension.SelectByID2("DetailItem" & a & "@Drawing View3", "NOTE", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditDelete()
+            boolstatus = Part.ActivateView("Drawing View4")
+            boolstatus = Part.Extension.SelectByID2("DetailItem" & a & "@Drawing View4", "NOTE", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditDelete()
+        Next
+
+        'DIMENSIONS - Width - Flat View  
+        boolstatus = Part.ActivateView("Drawing View1")
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat + (0.0482 / SScale), -10500, 0, 0, -1, 0.0001, 1, False, 0, 0)
+        'boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat - (0.0482 / SScale), -10500, 0, 0, -1, 0.0001, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2(xFrontFlat, yFrontFlat + 0.017, 0)
+        Part.ClearSelection2(True)
+
+        'Height - Flat View   
+        boolstatus = Part.ActivateView("Drawing View1")
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat + (0.0482 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat - (0.0482 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, yFrontFlat, 0)
+        Part.ClearSelection2(True)
+
+        'Height - A View 
+        boolstatus = Part.ActivateView("Drawing View3")
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat, (xIso + 0.01) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat + ((BTLth - 0.002) / (SScale * 2)), (xIso + 0.01) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2(xFrontFlat + 0.06, (xIso + 0.01) + 0.009, 0)
+        Part.ClearSelection2(True)
+
+        'Width - A View 
+        boolstatus = Part.ActivateView("Drawing View3")
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((BTLth) / (SScale * 2))), (xIso + 0.01), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat - ((BTLth) / (SScale * 2))), (xIso + 0.01) - (0.024 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddHorizontalDimension2(xFrontFlat, (xIso + 0.01) - 0.011, 0)
+        Part.ClearSelection2(True)
+
+        'Width - B View 
+        boolstatus = Part.ActivateView("Drawing View4")
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) + (0.025 / SScale), yFrontFlat, -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.025 / SScale), yFrontFlat - (0.024 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2((xIso + 0.03) - 0.01, yFrontFlat - 0.012, 0)
+        Part.ClearSelection2(True)
+
+        'Height - B View
+        boolstatus = Part.ActivateView("Drawing View4")
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) + (0.024 / SScale), yFrontFlat + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.014 / SScale), yFrontFlat - (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2((xIso + 0.03) + 0.012, yFrontFlat + 0.01, 0)
+        Part.ClearSelection2(True)
+
+        ' Note
+        Dim X, Y, Z As Decimal
+        boolstatus = Part.Extension.SetUserPreferenceInteger(swUserPreferenceIntegerValue_e.swDetailingBalloonStyle, 0, swBalloonStyle_e.swBS_None)
+
+        X = Round(xDimFlat * SScale * 1000, 2)
+        Y = Round(yDimFlat * SScale * 1000, 2)
+        Z = Round(zDimFlat * SScale * 1000, 2)
+        myNote = Draw.CreateText2(AHUName & "_02A_Bot_L" & vbNewLine & "Qty - 1" & vbNewLine & X & "mm x " & Y & "mm x " & "2.00mm", xRightSec - 0.05, xIso + 0.007, 0, 0.004, 0)
+
+        boolstatus = Part.SetUserPreferenceToggle(swUserPreferenceToggle_e.swViewDisplayHideAllTypes, True)
+
+        XValueList.Add(X)
+        YValueList.Add(Y)
+        ZValueList.Add(Z)
+
+
+        '==================================================================================== 2A Top L ====================================================================================================================
+
+        swApp.ActivateDoc2(AHUName & "_02A_Top_L", False, longstatus)
+        Part = swApp.ActiveDoc
+
+        If Part Is Nothing Then
+            MsgBox("Please open an appropriate Part Document")
+            Exit Sub
+        End If
+
+        swSheet = Draw.GetCurrentSheet()
+        swSheet.SetProperties2(12, 12, 1, SScale, False, 0.297, 0.21, True)
+        swSheet.SetTemplateName(DrawTemp)
+        swSheet.ReloadTemplate(True)
+        swApp.ActivateDoc2("Draw1 - Sheet1", False, longstatus)
+        Part = swApp.ActiveDoc
+        Part = Draw
+
+        ' Flat Views
+        boolstatus = Draw.CreateFlatPatternViewFromModelView(AHUName & "_02A_Top_L", "Default", xFrontFlat, yTopSec, 0)
+        boolstatus = Draw.ActivateView("Drawing View6")
+        Part.ClearSelection2(True)
+
+        'Front 
+        myView = Draw.CreateDrawViewFromModelView3(AHUName & "_02A_Top_L", "*Front", -xFrontFlat, yTopSec, 0)
+        boolstatus = Draw.ActivateView("Drawing View7")
+        Part.ClearSelection2(True)
+
+        'Top - Section
+        boolstatus = Draw.ActivateView("Drawing View7")
+        skSegment = Part.SketchManager.CreateLine((xDim * SScale / 2) + 0.15, 0.015, 0, -(xDim * SScale / 2) - 0.15, 0.015, 0)
+        boolstatus = Part.Extension.SelectByID2("Line1", "SKETCHSEGMENT", 0, 0, 0, False, 0, Nothing, 0)
+        excludedComponents = vbEmpty
+        myView = Draw.CreateSectionViewAt5(xFrontFlat, yTopSec - 0.05, 0, "A", swCreateSectionViewAtOptions_e.swCreateSectionView_DisplaySurfaceCut, excludedComponents, 0)
+        boolstatus = Draw.ActivateView("Drawing View8")
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.Extension.SelectByID2("Drawing View8", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = Part.Extension.SelectByID2("Drawing View6", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        BaseView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewVerticalCenter, BaseView)
+        Part.ClearSelection2(True)
+        boolstatus = Part.ActivateSheet("Sheet1")
+
+        'Right - Section
+        boolstatus = Draw.ActivateView("Drawing View7")
+        skSegment = Part.SketchManager.CreateLine(0, (yDim * SScale / 2) + 0.15, 0, 0, -(yDim * SScale / 2) - 0.15, 0)
+        boolstatus = Part.Extension.SelectByID2("Line2", "SKETCHSEGMENT", 0, 0, 0, False, 0, Nothing, 0)
+        excludedComponents = vbEmpty
+        myView = Draw.CreateSectionViewAt5(xRightSec, yTopSec - 0.05, 0, "B", swCreateSectionViewAtOptions_e.swCreateSectionView_DisplaySurfaceCut, excludedComponents, 0)
+        boolstatus = Draw.ActivateView("Drawing View9")
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.Extension.SelectByID2("Drawing View9", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = Part.Extension.SelectByID2("Drawing View6", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        BaseView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewHorizontalCenter, BaseView)
+        Part.ClearSelection2(True)
+
+        'Isometric
+        myView = Part.CreateDrawViewFromModelView3(AHUName & "_02A_Top_L", "*Dimetric", xIso + ClearX + 0.07, yTopSec, 0)
+        boolstatus = Draw.ActivateView("Drawing View10")
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.Extension.SelectByID2("Drawing View10", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject6(1, -1)
+        boolstatus = DrawView.SetDisplayMode4(False, swDisplayMode_e.swSHADED, True, True, False)
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.Extension.SelectByID2("Drawing View10", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = Part.Extension.SelectByID2("Drawing View6", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        BaseView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewHorizontalCenter, BaseView)
+        Part.ClearSelection2(True)
+
+        boolstatus = Part.ActivateView("Drawing View9")
+        boolstatus = Part.Extension.SelectByID2("Drawing View9", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        DrawView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = Part.ActivateView("Drawing View4")
+        boolstatus = Part.Extension.SelectByID2("Drawing View4", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        BaseView = Part.SelectionManager.GetSelectedObject5(1)
+        boolstatus = DrawView.AlignWithView(swAlignViewTypes_e.swAlignViewVerticalCenter, BaseView)
+        Part.ClearSelection2(True)
+
+
+        For a = 1 To 50
+            boolstatus = Part.ActivateView("Drawing View9")
+            boolstatus = Part.Extension.SelectByID2("DetailItem" & a & "@Drawing View9", "NOTE", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditDelete()
+            boolstatus = Part.ActivateView("Drawing View8")
+            boolstatus = Part.Extension.SelectByID2("DetailItem" & a & "@Drawing View8", "NOTE", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditDelete()
+        Next
+
+        'Dimensions-------------------
+        'Width - Flat View   xFrontFlat, yTopSec
+        boolstatus = Part.ActivateView("Drawing View6")
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat, yTopSec + (0.0482 / SScale), -10500, 0, 0, -1, 0.0001, 1, False, 0, 0)
+        'boolstatus = Part.Extension.SelectByRay(xFrontFlat, yFrontFlat - (0.0482 / SScale), -10500, 0, 0, -1, 0.0001, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2(xFrontFlat, yTopSec + 0.017, 0)
+        Part.ClearSelection2(True)
+
+        'Height - Flat View   
+        boolstatus = Part.ActivateView("Drawing View6")
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat, yTopSec + (0.0482 / SScale), -10500, 0, 0, -1, 0.0001, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat, yTopSec - (0.0482 / SScale), -10500, 0, 0, -1, 0.0001, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, yTopSec, 0)
+        Part.ClearSelection2(True)
+
+        'Height - A View   
+        boolstatus = Part.ActivateView("Drawing View8")
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat, (yTopSec - 0.05) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay(xFrontFlat - ((BTLth - 0.002) / (SScale * 2)), (yTopSec - 0.05) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, (yTopSec - 0.05) + 0.01, 0)
+        Part.ClearSelection2(True)
+
+        'Width - A View
+        boolstatus = Part.ActivateView("Drawing View8")
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((BTLth) / (SScale * 2))), (yTopSec - 0.05) - (0.024 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat - ((BTLth) / (SScale * 2))), (yTopSec - 0.05), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2(xFrontFlat, (yTopSec - 0.05) - 0.011, 0)
+        Part.ClearSelection2(True)
+
+        'Width - B View  
+        boolstatus = Part.ActivateView("Drawing View9")
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) + (0.025 / SScale), yTopSec, -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.025 / SScale), yTopSec - (0.024 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2((xIso + 0.03) - 0.01, (yTopSec) - 0.012, 0)
+        Part.ClearSelection2(True)
+
+        'Height - B View
+        boolstatus = Part.ActivateView("Drawing View9")
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) + (0.024 / SScale), yTopSec + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.014 / SScale), yTopSec - (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
+        myDisplayDim = Part.AddDimension2((xIso + 0.03) + 0.012, (yTopSec) + 0.01, 0)
+        Part.ClearSelection2(True)
+
+
+        'Note
+        myNote = Draw.CreateText2(AHUName & "_02A_Top_L" & vbNewLine & "Qty - 1" & vbNewLine & X & "mm x " & Y & "mm x " & "2.00mm", xIso + ClearX + 0.02, yTopSec - 0.04, 0, 0.004, 0)
+
+        ' Save As
+        Part.ViewZoomtofit2()
+        longstatus = Part.SaveAs3(SaveFolder & "\AHU\" & AHUName & "_02A_Bot & Top_L.SLDDRW", 0, 2)
+        swApp.CloseAllDocuments(True)
+
+        Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02A_Bot & Top_L.SLDDRW", 3, 0, "", longstatus, longwarnings)
+        boolstatus = Part.EditRebuild3()
+        longstatus = Part.SaveAs3(SaveFolder & "\PDF Drawings\" & AHUName & "_02A_Bot & Top_L.PDF", 0, 2)
+
+        swApp.CloseAllDocuments(True)
+    End Sub
     Public Sub TopBot2BLDrawings(BTLth As Decimal)
-        'Exit Sub
+        If Exitsub = True Then
+            Exit Sub
+        End If
 
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02B_Bot_L2.SLDPRT", 1, 0, "", longstatus, longwarnings)
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_02B_Top_L2.SLDPRT", 1, 0, "", longstatus, longwarnings)
@@ -8241,13 +8980,6 @@ TWO_SIDE_Ls:
         myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, (xIso + 0.01), 0)
         Part.ClearSelection2(True)
 
-        ''Height - A View 
-        'boolstatus = Part.ActivateView("Drawing View3")
-        'boolstatus = Part.Extension.SelectByRay(xFrontFlat, (xIso + 0.01) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        'boolstatus = Part.Extension.SelectByRay(xFrontFlat + ((BTLth - 0.002) / (SScale * 2)), (xIso + 0.01) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
-        'myDisplayDim = Part.AddDimension2(xFrontFlat + 0.06, (xIso + 0.01) - 0.01, 0)
-        'Part.ClearSelection2(True)
-
         'Width - A View 
         boolstatus = Part.ActivateView("Drawing View3")
         boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((BTLth) / (SScale * 2))), (xIso + 0.01) - (0.024 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
@@ -8268,15 +9000,6 @@ TWO_SIDE_Ls:
         boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.014 / SScale), yFrontFlat - (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
         myDisplayDim = Part.AddDimension2((xIso + 0.03) + 0.012, yFrontFlat + 0.01, 0)
         Part.ClearSelection2(True)
-
-
-
-        ''Height - B View
-        'boolstatus = Part.ActivateView("Drawing View4")
-        'boolstatus = Part.Extension.SelectByRay((xIso + 0.03) - (0.024 / SScale), yFrontFlat + (0.025 / SScale), -5000, 0, 0, -1, 0.0001, 1, True, 0, 0)
-        'boolstatus = Part.Extension.SelectByRay((xIso + 0.03), yFrontFlat - (0.025 / SScale), -5000, 0, 0, -1, 0.0001, 1, True, 0, 0)
-        'myDisplayDim = Part.AddDimension2((xIso + 0.03) + 0.012, yFrontFlat + 0.01, 0)
-        'Part.ClearSelection2(True)
 
         ' Note
         Dim X, Y, Z As Decimal
@@ -8406,14 +9129,6 @@ TWO_SIDE_Ls:
         myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, yTopSec, 0)
         Part.ClearSelection2(True)
 
-
-        ''Height - A View   
-        'boolstatus = Part.ActivateView("Drawing View8")
-        'boolstatus = Part.Extension.SelectByRay(xFrontFlat, (yTopSec - 0.05) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
-        'boolstatus = Part.Extension.SelectByRay(xFrontFlat - ((BTLth - 0.002) / (SScale * 2000)), (yTopSec - 0.05) + (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
-        'myDisplayDim = Part.AddDimension2(xFrontFlat - 0.06, (yTopSec - 0.05), 0)
-        'Part.ClearSelection2(True)
-
         'Height - A View   
         boolstatus = Part.ActivateView("Drawing View8")
         boolstatus = Part.Extension.SelectByRay(xFrontFlat, (yTopSec - 0.05) - (0.025 / SScale), -10500, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
@@ -8423,7 +9138,7 @@ TWO_SIDE_Ls:
 
         'Width - A View
         boolstatus = Part.ActivateView("Drawing View8")
-        boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((BTLth) / (SScale * 2))), (yTopSec - 0.05) + (0.025 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
+        boolstatus = Part.Extension.SelectByRay((xFrontFlat + ((BTLth) / (SScale * 2))), (yTopSec - 0.05), -13000, 0, 0, -1, 0.0001 / SScale, 1, False, 0, 0)
         boolstatus = Part.Extension.SelectByRay((xFrontFlat - ((BTLth) / (SScale * 2))), (yTopSec - 0.05) - (0.024 / SScale), -13000, 0, 0, -1, 0.0001 / SScale, 1, True, 0, 0)
         myDisplayDim = Part.AddDimension2(xFrontFlat, (yTopSec - 0.05) + 0.011, 0)
         Part.ClearSelection2(True)
@@ -8458,7 +9173,10 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub BaseStandDrawings(PartName As String, BaseQty As Integer, BaseSize As Decimal)
-        'Exit Sub
+        If Exitsub = True Then
+            Exit Sub
+        End If
+
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_10_Base_Stand.SLDPRT", 2, 32, "", longstatus, longwarnings)
 
         swApp.ActivateDoc2(AHUName & "_10_Base_Stand", False, longstatus)
@@ -8635,7 +9353,10 @@ TWO_SIDE_Ls:
     End Sub
 
     Public Sub AssemDrawing()
-        'Exit Sub
+        If Exitsub = True Then
+            Exit Sub
+        End If
+
         Part = swApp.OpenDoc6(SaveFolder & "\AHU\" & AHUName & "_AHU Final Assembly.SLDASM", 2, 32, "", longstatus, longwarnings)
         Assy = Part
         Assy.ViewZoomtofit2()
@@ -8946,7 +9667,7 @@ Jump:
 
     End Function
 
-    '310mm to 450mm 9.2mm Holes ------------------------------------------------------------------------------------------------
+    '310mm to 400mm 9.2mm Holes ------------------------------------------------------------------------------------------------
 
     Function SmolInterBoltingNumber(Length As Decimal, HoleClearence As Decimal) As Decimal
 

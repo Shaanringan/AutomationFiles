@@ -57,14 +57,14 @@ Public Class PanelTypeAHU
 
         'TEXT FILE TEST DATA----------------------------------------------
         Dim file As IO.StreamWriter
-        file = My.Computer.FileSystem.OpenTextFileWriter("C:\AHU Automation - Output\" & ClientName & "\" & JobNo & "\_" & JobNo & " - AHU Input Data.txt", True)
-        file.WriteLine("---------------------------------------------------------- " & Date.Today & ", " & TimeOfDay)
-        file.WriteLine("AHU PANEL DATA for " & AhuName)
-        file.WriteLine("")
-        file.WriteLine("Wall Height - " & WallHt)
-        file.WriteLine("Wall Width - " & WallWth)
-        file.WriteLine("Fan Article No. - " & fanArticleNo)
-        file.WriteLine("Total No of fans = " & FanNos)
+        Dim filedata As String
+        Dim filedatapath As String
+        filedatapath = "C:\AHU Automation - Output\" & ClientName & "\" & JobNo & "\" & JobNo & " - AHU Input Data.txt"
+        filedata = "-------- " & Date.Today & ", " & TimeOfDay & vbNewLine & "AHU PANEL DATA for " & AhuName &
+                        vbNewLine & "Wall Height - " & WallHt & vbNewLine & "Wall Width - " & WallWth & vbNewLine & "Fan Article No. - " & fanArticleNo &
+                       vbNewLine & "Total No of fans = " & FanNos
+
+        System.IO.File.WriteAllText(filedatapath, filedata)
 
 #Region "Fan Placement Grid-----------------------------------------------"
 
@@ -215,10 +215,6 @@ CheckY:
 ContinueProcess:
         Dim FanDia As Integer = StdFunc.GetFromTable("diameter", "article_no_table", "article_no", fanArticleNo)
 
-        'Update Notepad File
-        file.WriteLine("Fan Grid (W x H) = " & FanNoX & " x " & FanNoY)
-        file.WriteLine("")
-
 #End Region
 
 #Region "Panel Dimensions-------------------------------------------------"
@@ -292,9 +288,9 @@ clrcalc:
         SideClear = WallWth - (FanNoX * panelWth)
 
 NotePad:
-        'Update Notepad File
-        file.WriteLine("Motor Panel Size (W x H) = " & panelWth & " x " & panelHt)
-        file.WriteLine("")
+        ''Update Notepad File
+        'file.WriteLine("Motor Panel Size (W x H) = " & panelWth & " x " & panelHt)
+        'file.WriteLine("")
 
 #End Region
 
@@ -386,10 +382,10 @@ StartModelCreation:
 
         'Start Model Creations--------------------------------------------
         PanelAHUModel.MotorSelection(FanDia, fanArticleNo)
-        PanelAHUModel.MotorSheet(panelWth / 1000, panelHt / 1000, FanDia, FanNoX, FanNoY, FanNos)
+        PanelAHUModel.MotorSheet(panelWth / 1000, panelHt / 1000, FanDia, FanNoX, FanNoY, FanNos, FanDia, ClientName)
         PanelAHUModel.MotorSubAssembly(fanArticleNo)
 
-        ''Blanks-----------------------------------------------------------
+        ''-------------Blanks-----------------
 
         If AHUDoor = True Then
             If BlkNosX > 1 Then
@@ -438,16 +434,17 @@ StartModelCreation:
                 End If
 
                 If PushSide = False Then
-                    BlkQty = BlkNosX * 2
+                    If BlkNosX > 1 Then
+                        BlkQty = BlkNosX
+                    Else
+                        BlkQty = BlkNosX * 2
+                    End If
                 Else
-                    BlkQty = BlkNosX
+                        BlkQty = BlkNosX
                 End If
 
-                If FanDia = "560" Or FanDia = "500" Or FanDia = "450" Then
-                    SideYHoles = False
-                Else
-                    SideYHoles = True
-                End If
+
+                SideYHoles = False
                 TopXHoles = False
 
                 PanelAHUModel.Blanks(BlankWth(i - 1) / 1000, panelHt / 1000, "_07_Side Blank_A" & i, BlkQty, Crnblk, BlkNosY, TopXHoles, SideYHoles, i)
@@ -498,11 +495,8 @@ TopBlankCalculation:
                     End If
                 End If
 
-                If FanDia = "560" Or FanDia = "500" Or FanDia = "450" Then
-                    TopXHoles = False
-                Else
-                    TopXHoles = True
-                End If
+
+                TopXHoles = False
                 SideYHoles = False
 
                 BlkQty = FanNoX
@@ -616,9 +610,13 @@ DoorModel:
                     End If
 
                     If PushSide = False Then
-                        BlkQty = BlkNosX * 2
+                        If BlkNosX > 1 Then
+                            BlkQty = BlkNosX
+                        Else
+                            BlkQty = BlkNosX * 2
+                        End If
                     Else
-                        BlkQty = BlkNosX
+                            BlkQty = BlkNosX
                     End If
 
                     TopXHoles = False
@@ -635,27 +633,54 @@ DoorModel:
 LandCSections:
         'L & C Sections-------------------------------------------------------
 
-        PanelAHUModel.Side_L(SideLWth / 1000, FanNoY, panelHt, BlkNosY, TopClear, CrnBlkHt, BlankHt)
+        PanelAHUModel.Side_L(SideLWth / 1000, FanNoY, panelHt, BlkNosY, TopClear, CrnBlkHt, BlankHt, SideClear)
         PanelAHUModel.Top_Bot_L(TopLWth / 1000, BlkNosX, BlkNosY, BlkWth, panelWth, FanNoX, CrnBlkWth, PushSide, SideClear, AHUDoor, DoorBlkWth, EndBlkWth / 1000)
-        PanelAHUModel.VerCChannels(FanNoY, FanNoX, panelHt, BlkNosY, TopClear, SideClear, BlankHt)
+        PanelAHUModel.VerCChannels(FanNoY, FanNoX, panelHt, BlkNosY, TopClear, SideClear, BlankHt, AHUDoor, BlkNosX)
 
         If TopClear > 0 Or FanNoY > 1 Then
-            PanelAHUModel.HorCChannel(panelWth / 100, FanNoY, BlkNosY, FanNoX)
+            If PushSide = True And FanNoY = 1 Then
+
+            Else
+                If SideClear <> 0 Then
+                    PanelAHUModel.HorCChannel(panelWth / 100, FanNoY, BlkNosY, FanNoX)
+                End If
+            End If
         End If
 
         If SideClear > 0 Or FanNoX > 1 Then
-
             If PushSide = True Then
-                PanelAHUModel.HorCChannel2((SideClear - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor)
-                PanelAHUModel.HorCChannel3(((panelWth - 53) / 1000), FanNoY, BlkNosY, FanNoX, BlkNosX)
+                If AHUDoor = True Then
+                    PanelAHUModel.HorCChannel3(((panelWth - 53) / 1000), FanNoY, BlkNosY, FanNoX, BlkNosX)
+                Else
+                    PanelAHUModel.HorCChannel2((SideClear - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor, SideClear)
+                    PanelAHUModel.HorCChannel3(((panelWth - 53) / 1000), FanNoY, BlkNosY, FanNoX, BlkNosX)
+                End If
             Else
                 If BlkNosX >= 2 Then
-                    PanelAHUModel.HorCChannel2((SideClear - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor)
-                    If EndBlkWth > 220 Then
+                    If SideClear > panelWth Then
+                        If AHUDoor = True Then
+                            PanelAHUModel.HorCChannel2((SideClear - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor, SideClear)
+                        Else
+                            PanelAHUModel.HorCChannel2((panelWth - 101) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor, SideClear)
+                        End If
+                    Else
+                        PanelAHUModel.HorCChannel2((SideClear - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor, SideClear)
+                    End If
+
+                    If EndBlkWth > 201 Then
                         PanelAHUModel.HorCChannel3(((EndBlkWth - 53) / 1000), FanNoY, BlkNosY, FanNoX, BlkNosX)
                     End If
                 Else
-                        PanelAHUModel.HorCChannel2((SideClear - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor)
+                    If SideClear <= 0 Then
+                        If FanNoX > 2 Then
+                            PanelAHUModel.HorCChannel(panelWth / 100, FanNoY, BlkNosY, FanNoX)
+                            PanelAHUModel.HorCChannel2((panelWth - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor, SideClear)
+                        Else
+                            PanelAHUModel.HorCChannel2((panelWth - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor, SideClear)
+                        End If
+                    Else
+                        PanelAHUModel.HorCChannel2((SideClear - 53) / 1000, FanNoY, BlkNosY, FanNoX, PushSide, BlkNosX, AHUDoor, SideClear)
+                    End If
                 End If
             End If
         End If
