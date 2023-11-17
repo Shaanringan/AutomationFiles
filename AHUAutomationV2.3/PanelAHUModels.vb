@@ -5951,19 +5951,21 @@ SideLAssem:
         myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 1, True, WallWth / 2000, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
         Part.ClearSelection2(True)
 
+        boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_10_Base_Stand-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+        boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_Motor Sub Assembly-1@" & AHUName & "_AHU Final Assembly/" & AHUName & "_" & ArtNo & "-1@" & AHUName & "_Motor Sub Assembly/" & MotorDia & "mm_10_C Channel-1@" & AHUName & "_" & ArtNo & "", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
+        'If SideClear = 0 Then
+        '    myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Right Plane Coincident
+        'Else
+        myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 1, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Right Plane Coincident
+        'End If
+        Part.ClearSelection2(True)
+
         boolstatus = Part.Extension.SelectByID2("Top Plane", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
         boolstatus = Part.Extension.SelectByID2("Top Plane@" & AHUName & "_10_Base_Stand-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
         myMate = Assy.AddMate5(swMateType_e.swMateDISTANCE, 0, True, 0.027, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
         Part.ClearSelection2(True)
 
-        boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_10_Base_Stand-1@" & AHUName & "_AHU Final Assembly", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-        boolstatus = Part.Extension.SelectByID2("Right Plane@" & AHUName & "_Motor Sub Assembly-1@" & AHUName & "_AHU Final Assembly/" & AHUName & "_" & ArtNo & "-1@" & AHUName & "_Motor Sub Assembly/" & MotorDia & "mm_10_C Channel-1@" & AHUName & "_" & ArtNo & "", "PLANE", 0, 0, 0, True, 0, Nothing, 0)
-        If SideClear = 0 Then
-            myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Right Plane Coincident
-        Else
-            myMate = Assy.AddMate5(swMateType_e.swMateCOINCIDENT, 1, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)  '--------Right Plane Coincident
-        End If
-        Part.ClearSelection2(True)
+
 
         If WallWth > MaxSecLth3mm Then
             'Fans Pattern

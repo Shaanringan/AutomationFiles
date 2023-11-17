@@ -144,7 +144,7 @@ FanCheck:
 
         'Vertical Sections - ALL
         Dim VerMaxSecLth As Decimal = MaxSecLth
-        Dim VerSecLth_Last As Decimal = InnerWallHt - (VerMaxSecLth * (VerSecNo - 1))
+        Dim VerSecLth_Last As Decimal = InnerWallHt - (VerMaxSecLth * (VerSecNo - 1)) - 1
         While VerSecLth_Last < 300
             VerMaxSecLth -= 10
             VerSecLth_Last = InnerWallHt - (VerMaxSecLth * (VerSecNo - 1))
@@ -152,7 +152,8 @@ FanCheck:
 
         For i = 0 To UBound(VerSecLth)
             If InnerWallHt <= VerMaxSecLth Then
-                VerSecLth(i) = InnerWallHt
+                VerSecLth(i) = VerSecLth_Last
+                'VerSecLth(i) = InnerWallHt
             Else
                 VerSecLth(i) = VerMaxSecLth
             End If
@@ -248,6 +249,7 @@ FanCheck:
         BoxAHUModel.SaveFolder = "C:\AHU Automation - Output\" & ClientName & "\" & AhuName & "\" & JobNo
 
 #Region "Box----------------------"
+        'GoTo BoxAssem
         BoxAHUModel.MotorBoxAssy(fanArticleNo)
 
         BoxAHUModel.BackSheet(boxWth / 1000, boxHt / 1000, boxDth / 1000, FanDia, HoleCD / 1000)
@@ -265,7 +267,7 @@ FanCheck:
 
 
 
-
+BoxAssem:
         BoxAHUModel.BoxAssembly(boxWth / 1000, boxHt / 1000, boxDth / 1000, HoleCD / 1000, fanArticleNo)
         'BoxAHUModel.BoxAssyDrawing(fanArticleNo)
 
@@ -273,7 +275,7 @@ FanCheck:
 
 #Region "Frame--------------------"
         'Horizontal Section -BOT & TOP
-
+        'GoTo FrameSub
         For i = 0 To UBound(HorSecLth)
             lastpart = UBound(HorSecLth) + 1
             BoxAHUModel.FrameBotSec(HorSecLth(i) / 1000, 0.1, HorSecLth, WallWth, boxWth, FanNoX, SecWthSide, doorWth, i + 1, lastpart)
@@ -283,8 +285,8 @@ FanCheck:
         'Vertical Sections -SIDE
         For i = 0 To UBound(VerSecLth)
             lastpart = UBound(VerSecLth) + 1
-            BoxAHUModel.FrameSideSecRHS(SecWthSide / 1000, VerSecLth(i) / 1000, VerSecLth, WallHt, boxHt, i + 1, lastpart)
-            BoxAHUModel.FrameSideSecLHS(SecWthSide / 1000, VerSecLth(i) / 1000, VerSecLth, WallHt, boxHt, i + 1, lastpart)
+            BoxAHUModel.FrameSideSecRHS(SecWthSide / 1000, VerSecLth(i) / 1000, VerSecLth, WallHt, boxHt, i + 1, lastpart, FanNoY)
+            BoxAHUModel.FrameSideSecLHS(SecWthSide / 1000, VerSecLth(i) / 1000, VerSecLth, WallHt, boxHt, i + 1, lastpart, FanNoY)
         Next
 
         'Vertical Sections -MID
@@ -313,6 +315,7 @@ FanCheck:
 
         'End If
 
+FrameSub:
         'Frame Sub Assy
         BoxAHUModel.FrameSubAssy(WallWth / 1000, WallHt / 1000, boxWth / 1000, boxHt / 1000, FanNoX, FanNoY, HorSecLth, VerSecLth, SideClear / 2000, TopClear, doorSide, doorWth / 1000, doorHt / 1000)
 
@@ -333,10 +336,10 @@ FanCheck:
 
         'Side Blanks
         If (SideClear - doorWth) >= (MinBlankWth * 2) Then
-            BoxAHUModel.BlankSheet(2 * boxHt / 1000, (SideClear - doorWth) / 2000, "Side Clearance -1")
+            BoxAHUModel.SideBlankSheet(((2 * boxHt) - 50) / 1000, (SideClear - doorWth) / 2000, "Side Clearance -1", boxHt / 1000)
             BoxAHUModel.BlankSheetDrawing("Side Clearance -1")
             If (FanNoY Mod 2) > 0 Then
-                BoxAHUModel.BlankSheet(boxHt / 1000, (SideClear - doorWth) / 2000, "Side Clearance -2")
+                BoxAHUModel.SideBlankSheet(boxHt / 1000, (SideClear - doorWth) / 2000, "Side Clearance -2", boxHt/ 1000)
                 BoxAHUModel.BlankSheetDrawing("Side Clearance -2")
             End If
         End If
@@ -361,9 +364,9 @@ FanCheck:
             End If
         End If
 
-        'Top Side Corner
+        'Corner Blanks
         If (SideClear - doorWth) >= (MinBlankWth * 2) And TopClear >= MinBlankWth Then
-            BoxAHUModel.BlankSheet(TopClear / 1000, SideClear / 2000, "Top Corner")
+            BoxAHUModel.SideBlankSheet(TopClear / 1000, SideClear / 2000, "Top Corner", boxHt / 1000)
             BoxAHUModel.BlankSheetDrawing("Top Corner")
         End If
 

@@ -30,11 +30,18 @@ Public Class BoxAHUModels
     Dim vBaloon As Object
     Dim myNote As Note
 
+    Dim FirstHole As Decimal = 0.15 - 0.101
+    Dim NewFirstHole As Decimal
+    Dim MtrShtYDist As Decimal
+
+
+
     Dim skPoint As Object
     Dim MotorShtYHoleDist As Decimal
     Dim MotorShtXHoleDist As Decimal
 
     Dim LastHolePosn As Decimal = 0
+    Dim NewSdHoleCtr As Decimal
 
     ReadOnly DrawTemp As String = "C:\Program Files (x86)\Crescent Engineering\Automation\AHU - Library\Drawing\AADTech Drawing Template.DRWDOT"
     ReadOnly DrawSheet As String = "C:\Program Files (x86)\Crescent Engineering\Automation\AHU - Library\Drawing\AADTech Sheet Format - A4 - Landscape.slddrt"
@@ -2194,7 +2201,7 @@ Public Class BoxAHUModels
 
     End Sub
 
-    Public Sub FrameSideSecRHS(SectionWidth As Decimal, SectionHeight As Decimal, SectionHtSet As Integer(), WallHt As Integer, BoxHt As Integer, Stamp As Integer, lastpart As Integer)
+    Public Sub FrameSideSecRHS(SectionWidth As Decimal, SectionHeight As Decimal, SectionHtSet As Integer(), WallHt As Integer, BoxHt As Integer, Stamp As Integer, lastpart As Integer, FanNoY As Integer)
 
         'Variables
         Dim PartNo As Integer = Convert.ToInt16(Stamp)
@@ -2334,53 +2341,50 @@ Public Class BoxAHUModels
         End If
 
 
-        'Interbolting Holes Back - 1
-        If SideHoleCenter - 0.11 <= SectionHeight Then
-            boolstatus = Part.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-            Part.SketchManager.InsertSketch(True)
-            Part.ClearSelection2(True)
+        ''Interbolting Holes Back - 1
+        MtrShtYDist = (BoxHt - 150 - 150) / 2000
+        Part.SketchManager.InsertSketch(True)
+        Part.ClearSelection2(True)
+        boolstatus = Part.Extension.SelectByID2("UpperHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSketch()
 
-            If SideHoleCenter + 0.1 < SectionHeight Then
-                skSegment = Part.SketchManager.CreateCircle(-1 * (SectionWidth - 0.075), SideHoleCenter + 0.1, 0, -1 * (SectionWidth - 0.075) + 0.0045, SideHoleCenter + 0.1, 0)
-                Part.SketchAddConstraints("sgFIXED")
-                Part.ClearSelection2(True)
+        'Fan Holes
+        If FanNoY > 1 Then
+            If Stamp = 1 Then
+                For a = 1 To 3
+                    skPoint = Part.SketchManager.CreatePoint(0.0262, (MtrShtYDist * a) + FirstHole, 0)
+                Next
+                LastHolePosn = (MtrShtYDist * 3) + FirstHole
+            Else
+                NewFirstHole = (LastHolePosn + MtrShtYDist) - 1.1 - ((Stamp - (Stamp - 1)) / 1000)
+
+                For a = 1 To 3
+                    skPoint = Part.SketchManager.CreatePoint(0.0262, (MtrShtYDist * a) + NewFirstHole, 0)
+                Next
+                LastHolePosn = (MtrShtYDist * 3) + NewFirstHole
+
             End If
-
-            If SideHoleCenter - 0.1 > 0.01 Then
-                skSegment = Part.SketchManager.CreateCircle(-1 * (SectionWidth - 0.075), SideHoleCenter - 0.1, 0, -1 * (SectionWidth - 0.075) + 0.0045, SideHoleCenter - 0.1, 0)
-                Part.SketchAddConstraints("sgFIXED")
-                Part.ClearSelection2(True)
-            End If
-
-            myFeature = Part.FeatureManager.FeatureCut4(True, False, True, 2, 0, 0.01, 0.01, False, False, False, False, 0.0174532925199433, 0.0174532925199433, False, False, False, False, True, True, True, True, True, False, 0, 0, False, False)
-            Part.SelectionManager.EnableContourSelection = False
-            Part.ClearSelection2(True)
-
-            Part.ViewOrientationUndo()
         End If
 
-        'Interbolting Holes Back - 2
-        If SideHoleCenter + (BoxHt / 1000) - 0.09 <= SectionHeight Then
-            boolstatus = Part.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-            Part.SketchManager.InsertSketch(True)
-            Part.ClearSelection2(True)
+        Part.ClearSelection2(True)
+        boolstatus = Part.EditRebuild3()
 
-            If (SideHoleCenter + (BoxHt / 1000) + 0.1) < SectionHeight Then
-                skSegment = Part.SketchManager.CreateCircle(-1 * (SectionWidth - 0.075), SideHoleCenter + (BoxHt / 1000) + 0.1, 0, -1 * (SectionWidth - 0.075) + 0.0045, SideHoleCenter + (BoxHt / 1000) + 0.1, 0)
-                Part.SketchAddConstraints("sgFIXED")
-                Part.ClearSelection2(True)
-            End If
 
-            skSegment = Part.SketchManager.CreateCircle(-1 * (SectionWidth - 0.075), SideHoleCenter + (BoxHt / 1000) - 0.1, 0, -1 * (SectionWidth - 0.075) + 0.0045, SideHoleCenter + (BoxHt / 1000) - 0.1, 0)
-            Part.SketchAddConstraints("sgFIXED")
-            Part.ClearSelection2(True)
+        boolstatus = Part.Extension.SelectByID2("MidHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSketch()
+        boolstatus = Part.Extension.SelectByID2("FirstDist@MidHoles@_08_side rhs bot-l.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+        myDimension = Part.Parameter("FirstDist@MidHoles")
 
-            myFeature = Part.FeatureManager.FeatureCut4(True, False, True, 2, 0, 0.01, 0.01, False, False, False, False, 0.0174532925199433, 0.0174532925199433, False, False, False, False, True, True, True, True, True, False, 0, 0, False, False)
-            Part.SelectionManager.EnableContourSelection = False
-            Part.ClearSelection2(True)
-
-            Part.ViewOrientationUndo()
+        If Stamp = 1 Then
+            myDimension.SystemValue = FirstHole
+        Else
+            myDimension.SystemValue = NewFirstHole
         End If
+
+        Part.ClearSelection2(True)
+
+
+
 
         'Top Blank Top Hole
         If PartNo = (SectionHtSet.Length) And (WallHt - 50 - (BoxHt * NoOfBox)) >= 200 Then
@@ -2413,7 +2417,7 @@ Public Class BoxAHUModels
 
     End Sub
 
-    Public Sub FrameSideSecLHS(SectionWidth As Decimal, SectionHeight As Decimal, SectionHtSet As Integer(), WallHt As Integer, BoxHt As Integer, Stamp As Integer, lastpart As Integer)
+    Public Sub FrameSideSecLHS(SectionWidth As Decimal, SectionHeight As Decimal, SectionHtSet As Integer(), WallHt As Integer, BoxHt As Integer, Stamp As Integer, lastpart As Integer, FanNoY As Integer)
 
         'Variables
         Dim VerSecNo As Integer = Ceiling((WallHt - 100) / 1500)
@@ -2549,53 +2553,51 @@ Public Class BoxAHUModels
             End If
         End If
 
-        'Interbolting Holes Back - 1
-        If SideHoleCenter - 0.11 <= SectionHeight Then
-            boolstatus = Part.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-            Part.SketchManager.InsertSketch(True)
-            Part.ClearSelection2(True)
+        ''Interbolting Holes Back - 1
+        MtrShtYDist = (BoxHt - 150 - 150) / 2000
 
-            If SideHoleCenter + 0.1 < SectionHeight Then
-                skSegment = Part.SketchManager.CreateCircle(0.025, SideHoleCenter + 0.1, 0, 0.025 + 0.0045, SideHoleCenter + 0.1, 0)
-                Part.SketchAddConstraints("sgFIXED")
-                Part.ClearSelection2(True)
+
+        Part.SketchManager.InsertSketch(True)
+        Part.ClearSelection2(True)
+        boolstatus = Part.Extension.SelectByID2("UpperHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSketch()
+
+        'Fan Holes
+        If FanNoY > 1 Then
+            If Stamp = 1 Then
+                For a = 1 To 3
+                    skPoint = Part.SketchManager.CreatePoint(-0.0262, (MtrShtYDist * a) + FirstHole, 0)
+                Next
+                LastHolePosn = (MtrShtYDist * 3) + FirstHole
+            Else
+                NewFirstHole = (LastHolePosn + MtrShtYDist) - 1.1 - ((Stamp - (Stamp - 1)) / 1000)
+
+                For a = 1 To 3
+                    skPoint = Part.SketchManager.CreatePoint(-0.0262, (MtrShtYDist * a) + NewFirstHole, 0)
+                Next
+                LastHolePosn = (MtrShtYDist * 3) + NewFirstHole
+
             End If
-
-            If SideHoleCenter - 0.1 > 0.01 Then
-                skSegment = Part.SketchManager.CreateCircle(0.025, SideHoleCenter - 0.1, 0, 0.025 + 0.0045, SideHoleCenter - 0.1, 0)
-                Part.SketchAddConstraints("sgFIXED")
-                Part.ClearSelection2(True)
-            End If
-
-            myFeature = Part.FeatureManager.FeatureCut4(True, False, True, 2, 0, 0.01, 0.01, False, False, False, False, 0.0174532925199433, 0.0174532925199433, False, False, False, False, True, True, True, True, True, False, 0, 0, False, False)
-            Part.SelectionManager.EnableContourSelection = False
-            Part.ClearSelection2(True)
-
-            Part.ViewOrientationUndo()
         End If
 
-        'Interbolting Holes Back - 2
-        If SideHoleCenter + (BoxHt / 1000) - 0.09 <= SectionHeight Then
-            boolstatus = Part.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
-            Part.SketchManager.InsertSketch(True)
-            Part.ClearSelection2(True)
+        Part.ClearSelection2(True)
+        boolstatus = Part.EditRebuild3()
 
-            If (SideHoleCenter + (BoxHt / 1000) + 0.1) < SectionHeight Then
-                skSegment = Part.SketchManager.CreateCircle(0.025, SideHoleCenter + (BoxHt / 1000) + 0.1, 0, 0.025 + 0.0045, SideHoleCenter + (BoxHt / 1000) + 0.1, 0)
-                Part.SketchAddConstraints("sgFIXED")
-                Part.ClearSelection2(True)
-            End If
 
-            skSegment = Part.SketchManager.CreateCircle(0.025, SideHoleCenter + (BoxHt / 1000) - 0.1, 0, 0.025 + 0.0045, SideHoleCenter + (BoxHt / 1000) - 0.1, 0)
-            Part.SketchAddConstraints("sgFIXED")
-            Part.ClearSelection2(True)
+        boolstatus = Part.Extension.SelectByID2("MidHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSketch()
+        boolstatus = Part.Extension.SelectByID2("FirstDist@MidHoles@_07_side lhs bot-l.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+        myDimension = Part.Parameter("FirstDist@MidHoles")
 
-            myFeature = Part.FeatureManager.FeatureCut4(True, False, True, 2, 0, 0.01, 0.01, False, False, False, False, 0.0174532925199433, 0.0174532925199433, False, False, False, False, True, True, True, True, True, False, 0, 0, False, False)
-            Part.SelectionManager.EnableContourSelection = False
-            Part.ClearSelection2(True)
-
-            Part.ViewOrientationUndo()
+        If Stamp = 1 Then
+            myDimension.SystemValue = FirstHole
+        Else
+            myDimension.SystemValue = NewFirstHole
         End If
+
+        Part.ClearSelection2(True)
+
+
 
         'Top Blank Top Hole
         If PartNo = (SectionHtSet.Length) And (WallHt - 50 - (BoxHt * NoOfBox)) >= 200 Then
@@ -2635,6 +2637,7 @@ Public Class BoxAHUModels
         Dim PartNo As Integer = Convert.ToInt16(Stamp)
         Dim SideHoleCenter As Decimal
 
+
         Dim TempSecHt As Integer = 0
         If PartNo > 1 Then
             For i = 0 To PartNo - 2
@@ -2642,7 +2645,7 @@ Public Class BoxAHUModels
             Next
         End If
 
-        Dim TempBoxHt As Integer = 0
+        Dim TempBoxHt As Integer = 0  'Total Ht occupied by the boxes
         Dim NoOfBox As Integer = 0
         If PartNo > 1 Then
             While TempBoxHt < TempSecHt
@@ -2651,10 +2654,17 @@ Public Class BoxAHUModels
             End While
         End If
 
-        If PartNo <> lastpart Then
-            SideHoleCenter = (BoxHt - 100) / 1000
+
+        If PartNo = 1 Then
+            SideHoleCenter = (BoxHt - 101 + 25) / 1000
+            NewSdHoleCtr = (SectionHeight - 0.001) - ((BoxHt - 101) / 1000)
         Else
-            SideHoleCenter = (TempBoxHt - 100 - TempSecHt) / 1000
+            If PartNo <> 2 Then
+                NewSdHoleCtr = (SectionHeight - 0.001) - NewSdHoleCtr + 0.025
+            End If
+
+            SideHoleCenter = ((BoxHt - ((NewSdHoleCtr * 1000) + 1)) + 25) / 1000
+            'SideHoleCenter = (TempBoxHt - 100 - TempSecHt) / 1000
         End If
 
         'Open File
@@ -2671,35 +2681,80 @@ Public Class BoxAHUModels
         boolstatus = Part.EditRebuild3()
         Part.ViewZoomtofit2()
 
+        MtrShtYDist = (BoxHt - 150 - 150) / 2000
+
+
+        boolstatus = Part.Extension.SelectByID2("UpperHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSketch()
+
+        '-------------------------- Motors ------------------------------------
+        Dim TotalfanHoles As Integer = FanNoY * 3
+
+        'Fan Holes
+        If FanNoY > 1 Then
+            If Stamp = 1 Then
+                For a = 1 To 3
+                    skPoint = Part.SketchManager.CreatePoint(-0.0262, (MtrShtYDist * a) + FirstHole, 0)
+                Next
+                LastHolePosn = (MtrShtYDist * 3) + FirstHole
+            Else
+                NewFirstHole = (LastHolePosn + MtrShtYDist) - 1.1 - ((Stamp - (Stamp - 1)) / 1000)
+
+                For a = 1 To 3
+                    skPoint = Part.SketchManager.CreatePoint(-0.0262, (MtrShtYDist * a) + NewFirstHole, 0)
+                Next
+                LastHolePosn = (MtrShtYDist * 3) + NewFirstHole
+
+            End If
+        End If
+
+        Part.ClearSelection2(True)
+        boolstatus = Part.EditRebuild3()
+
+
+        boolstatus = Part.Extension.SelectByID2("MidHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSketch()
+
+        boolstatus = Part.Extension.SelectByID2("FirstDist@MidHoles@_11_vertical mid-c.SLDPRT", "DIMENSION", 0.143283845297534, 0.0666462762732973, 0.0250000000000047, False, 0, Nothing, 0)
+        myDimension = Part.Parameter("FirstDist@MidHoles")
+        If Stamp = 1 Then
+            myDimension.SystemValue = FirstHole
+        Else
+            myDimension.SystemValue = NewFirstHole
+        End If
+
+        Part.ClearSelection2(True)
+
+
 #Region "Old COde"
-        ''Interbolting Holes Side - 1
-        'If SideHoleCenter <= SectionHeight Then
+        'Interbolting Holes Side - 1
+        If SideHoleCenter <= SectionHeight Then
 
-        '    If (SideHoleCenter + 0.025) < SectionHeight Then
+            'If (SideHoleCenter + 0.025) < SectionHeight Then
 
-        '        Part = swApp.ActiveDoc
-        '        boolstatus = Part.Extension.SelectByID2("SideHoles1", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
-        '        Part.EditSketch()
+            Part = swApp.ActiveDoc
+            boolstatus = Part.Extension.SelectByID2("SideHoles1", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditSketch()
 
-        '        boolstatus = Part.Extension.SelectByID2("SideHoleDist@SideHoles1@_11_vertical mid-c.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
-        '        myDimension = Part.Parameter("SideHoleDist@SideHoles1")
-        '        myDimension.SystemValue = SideHoleCenter + 0.024
-        '        Part.ClearSelection2(True)
+            boolstatus = Part.Extension.SelectByID2("SideHoleDist@SideHoles1@_11_vertical mid-c.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+            myDimension = Part.Parameter("SideHoleDist@SideHoles1")
+            myDimension.SystemValue = SideHoleCenter '+ 0.024
+            Part.ClearSelection2(True)
 
-        '    End If
+            'End If
 
-        '    If (SideHoleCenter - 0.025) > 0.011 Then
-        '        skSegment = Part.SketchManager.CreateCircle(-0.025, SideHoleCenter - 0.025, 0, -0.025 + 0.0045, SideHoleCenter - 0.025, 0)
-        '        Part.SketchAddConstraints("sgFIXED")
-        '        Part.ClearSelection2(True)
-        '    End If
+            'If (SideHoleCenter - 0.025) > 0.011 Then
+            '    skSegment = Part.SketchManager.CreateCircle(-0.025, SideHoleCenter - 0.025, 0, -0.025 + 0.0045, SideHoleCenter - 0.025, 0)
+            '    Part.SketchAddConstraints("sgFIXED")
+            '    Part.ClearSelection2(True)
+            'End If
 
-        '    'myFeature = Part.FeatureManager.FeatureCut4(False, False, False, 2, 2, 0.01, 0.01, False, False, False, False, 0.0174532925199433, 0.0174532925199433, False, False, False, False, True, True, True, True, True, False, 0, 0, False, False)
-        '    'Part.SelectionManager.EnableContourSelection = False
-        '    'Part.ClearSelection2(True)
+            'myFeature = Part.FeatureManager.FeatureCut4(False, False, False, 2, 2, 0.01, 0.01, False, False, False, False, 0.0174532925199433, 0.0174532925199433, False, False, False, False, True, True, True, True, True, False, 0, 0, False, False)
+            'Part.SelectionManager.EnableContourSelection = False
+            'Part.ClearSelection2(True)
 
-        '    Part.ViewOrientationUndo()
-        'End If
+            Part.ViewOrientationUndo()
+        End If
 
         ''Interbolting Holes Side - 2
         'If SideHoleCenter + (BoxHt / 1000) - 0.025 <= SectionHeight Then
@@ -2815,73 +2870,6 @@ Public Class BoxAHUModels
 
 #End Region
 
-        Dim FirstHole As Decimal = 0.15 - 0.101
-        Dim TotalFanHt As Decimal = FanNoY * BoxHt
-        Dim FullSizePart As Integer = TotalFanHt / 1.1
-
-        Dim NewFirstHole As Decimal
-        Dim MtrShtYDist As Decimal = (BoxHt - 150 - 150) / 2000
-
-
-        If FanNoY > 1 Then
-            LastHolePosn = FirstHole + (MtrShtYDist * 3)
-
-            NewFirstHole = (LastHolePosn + MtrShtYDist) - 1.1 - (Stamp - 1)
-
-        End If
-
-
-
-        boolstatus = Part.Extension.SelectByID2("UpperHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
-        Part.EditSketch()
-
-        '-------------------------- Motors ------------------------------------
-        Dim TotalfanHoles As Integer = FanNoY * 3
-
-        'Fan Holes
-        If FanNoY > 1 Then
-            If Stamp = 1 Then
-                For a = 1 To 3
-                    skPoint = Part.SketchManager.CreatePoint(-0.0262, (MtrShtYDist * a) + FirstHole, 0)
-                Next
-                LastHolePosn = (MtrShtYDist * 3) + FirstHole
-            Else
-
-                For a = 1 To 3
-                    skPoint = Part.SketchManager.CreatePoint(-0.0262, (MtrShtYDist * a) + NewFirstHole, 0)
-                Next
-                LastHolePosn = (MtrShtYDist * 3) + NewFirstHole
-
-            End If
-
-
-            'For a = 4 To TotalfanHoles - 1
-            '    skPoint = Part.SketchManager.CreatePoint(-0.0262, (MotorShtYHoleDist * a) + (0.15 - 0.101) - (1 * (Stamp - 1)), 0)
-            'Next
-
-
-            'Else                                    'Fans = 1
-            '        For a = 2 To MotorShtXHole - 2
-            '        skPoint = Part.SketchManager.CreatePoint(0, (MotorShtYHoleDist * a) - Minus25, 0)
-            '    Next
-        End If
-
-        Part.ClearSelection2(True)
-        boolstatus = Part.EditRebuild3()
-
-
-        boolstatus = Part.Extension.SelectByID2("MidHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
-        Part.EditSketch()
-
-        boolstatus = Part.Extension.SelectByID2("FirstDist@MidHoles@_11_vertical mid-c.SLDPRT", "DIMENSION", 0.143283845297534, 0.0666462762732973, 0.0250000000000047, False, 0, Nothing, 0)
-        myDimension = Part.Parameter("FirstDist@MidHoles")
-        If Stamp = 1 Then
-            myDimension.SystemValue = FirstHole
-        Else
-            myDimension.SystemValue = NewFirstHole
-        End If
-
-        Part.ClearSelection2(True)
 
         ' Named View
         Part.ShowNamedView2("*Front", 1)
@@ -4333,6 +4321,100 @@ Public Class BoxAHUModels
 
 
 #End Region
+    'Side Blank
+    Public Sub SideBlankSheet(Height As Decimal, Width As Decimal, PartName As String, BoxHt As Decimal)
+
+        'Open File
+        Part = swApp.OpenDoc6("C:\Program Files (x86)\Crescent Engineering\Automation\AHU - Library\Box - Sample\14_side blank sheet.SLDPRT", 1, 0, "", longstatus, longwarnings)
+        swApp.ActivateDoc2("14_blank sheet", False, longstatus)
+        Part = swApp.ActiveDoc
+
+        'ReDim
+        boolstatus = Part.Extension.SelectByID2("BlankWidth@BaseFlange@14_blank sheet.SLDPRT", "DIMENSION", 0, 0, 0, True, 0, Nothing, 0)
+        myDimension = Part.Parameter("BlankWidth@BaseFlange")
+        myDimension.SystemValue = Width
+        Part.ClearSelection2(True)
+        boolstatus = Part.EditRebuild3()
+
+        boolstatus = Part.Extension.SelectByID2("BlankHeight@BaseFlange@14_blank sheet.SLDPRT", "DIMENSION", 0, 0, 0, True, 0, Nothing, 0)
+        myDimension = Part.Parameter("BlankHeight@BaseFlange")
+        myDimension.SystemValue = Height
+        Part.ClearSelection2(True)
+        boolstatus = Part.EditRebuild3()
+
+        Part.ViewZoomtofit2()
+
+        If Width >= 0.6 Then
+            boolstatus = Part.Extension.SelectByID2("Front Plane", "PLANE", 0, 0, 0, False, 0, Nothing, 0)
+            Part.SketchManager.InsertSketch(True)
+            Part.ClearSelection2(True)
+
+            skSegment = Part.SketchManager.CreateCircle(0, (Height / 2) - 0.025, 0, 0.0045, (Height / 2) - 0.025, 0)
+            Part.SketchAddConstraints("sgFIXED")
+            Part.ClearSelection2(True)
+
+            skSegment = Part.SketchManager.CreateCircle(0, -1 * ((Height / 2) - 0.025), 0, 0.0045, -1 * ((Height / 2) - 0.025), 0)
+            Part.SketchAddConstraints("sgFIXED")
+            Part.ClearSelection2(True)
+
+            myFeature = Part.FeatureManager.FeatureCut4(True, False, True, 2, 0, 0.01, 0.01, False, False, False, False, 0.0174532925199433, 0.0174532925199433, False, False, False, False, True, True, True, True, True, False, 0, 0, False, False)
+            Part.SelectionManager.EnableContourSelection = False
+            Part.ClearSelection2(True)
+
+            Part.ViewOrientationUndo()
+        End If
+
+        Dim FirstHole As Decimal
+        Dim MtrShtYDist As Decimal = (BoxHt - 0.15 - 0.15) / 2
+
+        boolstatus = Part.Extension.SelectByID2("FirstHole", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSketch()
+        boolstatus = Part.Extension.SelectByID2("First Hole@FirstHole@14_blank sheet.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+        myDimension = Part.Parameter("First Hole@FirstHole")
+
+        If PartName = "Side Clearance -1" Then
+            myDimension.SystemValue = 0.1
+            FirstHole = 0.1
+        Else
+            myDimension.SystemValue = 0.15
+            FirstHole = 0.15
+        End If
+
+        Part.ClearSelection2(True)
+        Part.EditRebuild3()
+
+        Part.ShowNamedView2("*Trimetric", 8)
+        Part.ClearSelection2(True)
+        Part.ViewZoomtofit2()
+
+        'If PartName = "Side Clearance -1" Or PartName = "Side Clearance -2" Then
+        Part.SketchManager.InsertSketch(True)
+        boolstatus = Part.Extension.SelectByID2("SktHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+            Part.EditSketch()
+            Part.ClearSelection2(True)
+
+        'Fan Holes
+        For a = 1 To 5
+            skPoint = Part.SketchManager.CreatePoint((Width / 2) - 0.025, (MtrShtYDist * a) + FirstHole, 0)
+            skPoint = Part.SketchManager.CreatePoint(-((Width / 2) - 0.0262), (MtrShtYDist * a) + FirstHole, 0)
+        Next
+        Part.ClearSelection2(True)
+
+        'Save File
+        longstatus = Part.SaveAs3("C:\AHU Automation - Output\" & Client & "\" & AHUName & "\" & JobNo & "\AHU Box\" & JobNo & "_14_blank sheet_" & PartName & ".SLDPRT", 0, 2)
+        Part.ViewZoomtofit2()
+        Part = Nothing
+        StdFunc.CloseActiveDoc()
+
+        ''BOM Entries
+        'bomData.EnterValuesInCNC(JobNo & "_14_blank sheet_" & PartName, (Width * 1000) + 28.81, (Height * 1000) + 28.81, "2.0", 1, Client, AHUName, JobNo)
+
+        'Add entry to predictive Database
+        Dim name As String = "BoxBlank_" & Convert.ToString(Truncate(Width * 1000)) & "x" & Convert.ToString(Truncate(Height * 1000)) & "_" & PartName
+        predictivedb.AHUPartCount(name)
+
+    End Sub
+
 
     Public Sub BlankSheet(Height As Decimal, Width As Decimal, PartName As String)
 
@@ -4376,20 +4458,66 @@ Public Class BoxAHUModels
             Part.ViewOrientationUndo()
         End If
 
+        boolstatus = Part.Extension.SelectByID2("FirstHole", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        Part.EditSketch()
+        boolstatus = Part.Extension.SelectByID2("First Hole@FirstHole@14_blank sheet.SLDPRT", "DIMENSION", 0, 0, 0, False, 0, Nothing, 0)
+        myDimension = Part.Parameter("First Hole@FirstHole")
+
+        If PartName = "Side Clearance -1" Then
+            myDimension.SystemValue = 0.1
+        Else
+            myDimension.SystemValue = 0.145
+        End If
+
+        Part.ClearSelection2(True)
+        Part.ShowNamedView2("*Trimetric", 8)
+        Part.ClearSelection2(True)
+
+        'If PartName = "Side Clearance -1" Or PartName = "Side Clearance -2" Then
+        '    Part.ViewZoomtofit2()
+        '    boolstatus = Part.Extension.SelectByID2("SktHoles", "SKETCH", 0, 0, 0, False, 0, Nothing, 0)
+        '    Part.EditSketch()
+        '    Part.ClearSelection2(True)
+
+
+
+        '    'Fan Holes
+        '    If PartName = "Side Clearance -1" Then
+        '        For a = 1 To 3
+        '            skPoint = Part.SketchManager.CreatePoint(-0.0262, (MtrShtYDist * a) + FirstHole, 0)
+        '        Next
+        '        LastHolePosn = (MtrShtYDist * 3) + FirstHole
+
+
+        '        NewFirstHole = (LastHolePosn + MtrShtYDist) - 1.1 - ((Stamp - (Stamp - 1)) / 1000)
+
+        '        For a = 1 To 3
+        '            skPoint = Part.SketchManager.CreatePoint(-0.0262, (MtrShtYDist * a) + NewFirstHole, 0)
+        '        Next
+        '        LastHolePosn = (MtrShtYDist * 3) + NewFirstHole
+
+        '        skPoint = Part.SketchManager.CreatePoint(0.485, -0.25, 0)
+        '        skPoint = Part.SketchManager.CreatePoint(-0.485, -0.227124, 0)
+        '        Part.ClearSelection2(True)
+        '    End If
+        'End If
+
+
         'Save File
         longstatus = Part.SaveAs3("C:\AHU Automation - Output\" & Client & "\" & AHUName & "\" & JobNo & "\AHU Box\" & JobNo & "_14_blank sheet_" & PartName & ".SLDPRT", 0, 2)
         Part.ViewZoomtofit2()
         Part = Nothing
         StdFunc.CloseActiveDoc()
 
-        'BOM Entries
-        bomData.EnterValuesInCNC(JobNo & "_14_blank sheet_" & PartName, (Width * 1000) + 28.81, (Height * 1000) + 28.81, "2.0", 1, Client, AHUName, JobNo)
+        ''BOM Entries
+        'bomData.EnterValuesInCNC(JobNo & "_14_blank sheet_" & PartName, (Width * 1000) + 28.81, (Height * 1000) + 28.81, "2.0", 1, Client, AHUName, JobNo)
 
         'Add entry to predictive Database
         Dim name As String = "BoxBlank_" & Convert.ToString(Truncate(Width * 1000)) & "x" & Convert.ToString(Truncate(Height * 1000)) & "_" & PartName
         predictivedb.AHUPartCount(name)
 
     End Sub
+
 
     Public Sub BlankSheetDrawing(PartName As String)
         Exit Sub
@@ -5208,7 +5336,8 @@ Public Class BoxAHUModels
 
             boolstatus = Part.Extension.SelectByID2("Top Plane@" & JobNo & "_Motor Box-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
             boolstatus = Part.Extension.SelectByID2("Top Plane@" & JobNo & "_14_blank sheet_Side Clearance -1-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
-            myMate = Assy.AddMate5(5, 0, False, BoxHt / 2, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+            myMate = Assy.AddMate5(5, 0, True, (BoxHt / 2) - 0.03, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+            'myMate = Assy.AddMate5(5, 0, False, (BoxHt / 2) + 0.025, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
             Part.ClearSelection2(True)
 
             boolstatus = Part.Extension.SelectByID2("Right Plane@" & JobNo & "_Motor Box-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
@@ -5230,7 +5359,6 @@ Public Class BoxAHUModels
             Part.EditRebuild3()
             Part.ViewZoomtofit2()
         End If
-
         Part.ClearSelection2(True)
 
         'Side Clearance -1-2
@@ -5262,7 +5390,6 @@ Public Class BoxAHUModels
             Part.EditRebuild3()
             Part.ViewZoomtofit2()
         End If
-
         Part.ClearSelection2(True)
 
         'Side Clearance -2-1
@@ -5273,9 +5400,9 @@ Public Class BoxAHUModels
             boolstatus = Part.Extension.SelectByID2("Top Plane@" & JobNo & "_Motor Box-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
             boolstatus = Part.Extension.SelectByID2("Top Plane@" & JobNo & "_14_blank sheet_Side Clearance -2-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
             If FanHtNo Mod 2 = 0 Then
-                myMate = Assy.AddMate5(5, 0, False, (BoxHt * (FanHtNo - 1.5)) + (TopClearDis / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                myMate = Assy.AddMate5(5, 0, False, (BoxHt * (FanHtNo - 1.5)) - (BoxHt / 2) + (TopClearDis / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
             Else
-                myMate = Assy.AddMate5(5, 0, False, BoxHt * (FanHtNo - 1), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+                myMate = Assy.AddMate5(5, 0, False, BoxHt * (FanHtNo - 1) - (BoxHt / 2) - 0.02, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
             End If
             Part.ClearSelection2(True)
 
@@ -5292,7 +5419,6 @@ Public Class BoxAHUModels
             Part.EditRebuild3()
             Part.ViewZoomtofit2()
         End If
-
         Part.ClearSelection2(True)
 
         'Side Clearance -2-2
@@ -5318,7 +5444,6 @@ Public Class BoxAHUModels
             Part.EditRebuild3()
             Part.ViewZoomtofit2()
         End If
-
         Part.ClearSelection2(True)
 
         'Top Clearance -1
@@ -5328,7 +5453,7 @@ Public Class BoxAHUModels
 
             boolstatus = Part.Extension.SelectByID2("Top Plane@" & JobNo & "_Motor Box-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
             boolstatus = Part.Extension.SelectByID2("Top Plane@" & JobNo & "_14_blank sheet_Top Clearance -1-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
-            myMate = Assy.AddMate5(5, 0, False, (BoxHt * (FanHtNo - 0.5)) + TopClearDis / 2, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+            myMate = Assy.AddMate5(5, 0, False, (BoxHt * (FanHtNo - 0.5)) + (TopClearDis / 2) - 0.02, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
             Part.ClearSelection2(True)
 
             boolstatus = Part.Extension.SelectByID2("Right Plane@" & JobNo & "_Motor Box-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
@@ -5398,7 +5523,7 @@ Public Class BoxAHUModels
 
             boolstatus = Part.Extension.SelectByID2("Top Plane@" & JobNo & "_14_blank sheet_Top Clearance -1-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
             boolstatus = Part.Extension.SelectByID2("Top Plane@" & JobNo & "_14_blank sheet_Top Corner-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
-            myMate = Assy.AddMate5(0, 0, False, 0, 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
+            myMate = Assy.AddMate5(5, 0, True, (TopClearDis / 2), 0, 0, 0, 0, 0, 0, 0, False, False, 0, longstatus)
             Part.ClearSelection2(True)
 
             boolstatus = Part.Extension.SelectByID2("Right Plane@" & JobNo & "_14_blank sheet_Side Clearance -1-1@" & JobNo & "_AHU Final Assembly", "PLANE", 0, 0, 0, True, 1, Nothing, 0)
