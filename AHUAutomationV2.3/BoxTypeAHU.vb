@@ -330,7 +330,7 @@ FrameSub:
 #Region "Blanks-------------------"
         'Box Blank
         If fanNos < FanNoY * FanNoX Then
-            BoxAHUModel.BlankSheet(boxHt / 1000, boxWth / 1000, "Box")
+            BoxAHUModel.BlankSheet(boxHt / 1000, boxWth / 1000, "Box", boxHt / 1000)
             BoxAHUModel.BlankSheetDrawing("Box")
         End If
 
@@ -346,19 +346,19 @@ FrameSub:
 
         'Top Blanks
         If TopClear >= MinBlankWth Then
-            BoxAHUModel.BlankSheet(TopClear / 1000, 2 * boxWth / 1000, "Top Clearance -1")
+            BoxAHUModel.BlankSheet(TopClear / 1000, 2 * boxWth / 1000, "Top Clearance -1", boxHt / 1000)
             BoxAHUModel.BlankSheetDrawing("Top Clearance -1")
             If (FanNoX Mod 2) = 0 Then
                 If doorYesNo = "YES" Then
-                    BoxAHUModel.BlankSheet(TopClear / 1000, doorWth / 1000, "Top Clearance -2")
+                    BoxAHUModel.BlankSheet(TopClear / 1000, doorWth / 1000, "Top Clearance -2", boxHt / 1000)
                     BoxAHUModel.BlankSheetDrawing("Top Clearance -2")
                 End If
             Else
                 If doorYesNo = "YES" Then
-                    BoxAHUModel.BlankSheet(TopClear / 1000, (doorWth + boxWth) / 1000, "Top Clearance -2")
+                    BoxAHUModel.BlankSheet(TopClear / 1000, (doorWth + boxWth) / 1000, "Top Clearance -2", boxHt / 1000)
                     BoxAHUModel.BlankSheetDrawing("Top Clearance -2")
                 Else
-                    BoxAHUModel.BlankSheet(TopClear / 1000, boxWth / 1000, "Top Clearance -2")
+                    BoxAHUModel.BlankSheet(TopClear / 1000, boxWth / 1000, "Top Clearance -2", boxHt / 1000)
                     BoxAHUModel.BlankSheetDrawing("Top Clearance -2")
                 End If
             End If
@@ -372,7 +372,7 @@ FrameSub:
 
         'Door Blank
         If doorYesNo = "YES" Then
-            BoxAHUModel.BlankSheet(((FanNoY * boxHt) - doorHt) / 1000, doorWth / 1000, "Door Blank")
+            BoxAHUModel.BlankSheet(((FanNoY * boxHt) - doorHt) / 1000, doorWth / 1000, "Door Blank", boxHt / 1000)
             BoxAHUModel.BlankSheetDrawing("Door Blank")
         End If
 
